@@ -8,7 +8,7 @@ For research in the field of computational neuroscience - generating Three Bodie
 |File name         | Purpsoe |
 |----------------------|------|
 |`README.md`| readme|
-|`ECG_classification.ipynb`| code section for the model and trials|
+|`Three.ipynb`| code section for the model and trials|
 |`submissions`| directory for project submitted files|
 
 ## Run
