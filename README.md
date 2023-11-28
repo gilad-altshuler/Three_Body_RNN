@@ -9,8 +9,8 @@ For research in the field of computational neuroscience - generating Three Bodie
 |----------------------|------|
 |`Three Bodies Network.ipynb`|Main code section for the model and trials|
 |`Models.py`|Proposed models code: <br> (1) Full Rank RNN <br> (2) Full Rank Three Bodies Network <br> (3) Low Rank RNN <br> (4) Low Rank Three Bodies Network|
-|`utils.py`||
-|`utils.py`||
+|`K_bit_Flipflop_task.py`||
+|`sin_task.py`||
 |`utils.py`||
 |`Models.py`| directory for project submitted files|
 
