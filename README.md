@@ -2,6 +2,9 @@
 
 ## About
 For research in the field of computational neuroscience - generating Three Bodies RNN and analyzing the new dynamics.
+<img width="368" alt="enzyme net" src="https://github.com/gilad-altshuler/Three_Bodies_RNN/assets/119232867/070d5710-9ad0-4a92-9649-cd92f3d26448">
+![gregurick-palsson-large](https://github.com/gilad-altshuler/Three_Bodies_RNN/assets/119232867/51f87f46-2cd0-42ec-b0b7-2d47699fef19)
+
 
 ## Files in The Repository
 
@@ -18,18 +21,8 @@ For research in the field of computational neuroscience - generating Three Bodie
 
 ## Run
 
-All the codelines needed can be found in ECG_classification.ipynb.
-To be able to run the dataset one need to:
-
-(1) Download manually the datasets from https://www.kaggle.com/shayanfazeli/heartbeat.
-
-(2) Uploading to your drive to the directory /content/drive/MyDrive/Deep_Learning/datasets (default in code)
-
-(3) One can choose other directory in drive, but change the link in the code.*
-
-*the last directory must be called "datasets"
-
-This will allow the rest of code to use the heartbeats datasets.
+To run experiments, please run `Three Bodies Network.ipynb` with all the utility files.
+Choose task as subsection of the notebook. 
 
 ## Results
 
