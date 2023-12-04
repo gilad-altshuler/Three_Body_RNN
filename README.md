@@ -2,8 +2,8 @@
 
 ## About
 For research in the field of computational neuroscience - generating Three Bodies RNN and analyzing the new dynamics.
-<img width="368" alt="enzyme net" src="https://github.com/gilad-altshuler/Three_Bodies_RNN/assets/119232867/070d5710-9ad0-4a92-9649-cd92f3d26448">
-![gregurick-palsson-large](https://github.com/gilad-altshuler/Three_Bodies_RNN/assets/119232867/779f9e0f-311b-4d7a-8ad5-c54e0356a407)
+
+<img width="630" alt="three bodies net" src="https://github.com/gilad-altshuler/Three_Bodies_RNN/assets/119232867/57a59d0a-ecc1-474a-aa9d-9f4480d78ff4">
 
 
 
@@ -27,4 +27,4 @@ Choose task as subsection of the notebook.
 
 ## Results
 
-- Training the model on datasets:
+- conducted...
