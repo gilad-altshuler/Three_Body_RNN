@@ -4,9 +4,11 @@ from torch import nn
 from torch.utils.data import TensorDataset, DataLoader
 import sin_task
 import K_Bit_Flipflop_task
+import PIN_task
 from tqdm import tqdm
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class Three_Bodies_RNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, nonlinearity = torch.tanh, task = "FF"):
@@ -39,37 +41,39 @@ class Three_Bodies_RNN(nn.Module):
 
         for i,u_t in enumerate(u.permute(1,0,2)):
           # calculating: input weight
-          input_w = self.input_fc(u_t)
+            input_w = self.input_fc(u_t)
+            hidden_w = 0
+            if hidden is not None:
+                # calculating: h^T @ W @ h + bias_tensor
+                hidden_w = (hidden.view(b_size,1,1,hid) @ self.three_way_tensor.view(1,hid,hid,hid) @ hidden.view(b_size,1,hid,1)).reshape((b_size,hid))
+                hidden_w+= self.bias_tensor
 
-          hidden_w = 0
-          if hidden != None:
-            # calculating: h^T @ W @ h + bias_tensor
-            hidden_w = (hidden.view(b_size,1,1,hid) @ self.three_way_tensor.view(1,hid,hid,hid) @ hidden.view(b_size,1,hid,1)).reshape((b_size,hid))
-            hidden_w+= self.bias_tensor
+            # now perform the nonlinearity to the new hidden
 
-          # now perform the nonlinearity to the new hidden
-
-          hidden = self.nonlinearity(hidden_w + input_w)
-          r_out[i] = hidden
+            hidden = self.nonlinearity(hidden_w + input_w)
+            r_out[i] = hidden
 
         # need r_out to be (batch_size, time_steps, hidden_size) dim:
         r_out = r_out.permute(1,0,2)
 
         # get final output
         output = self.fc(r_out)
-
         return output , hidden , r_out
 
-    def train(self,Inputs,Targets,n_steps,optimizer,criterion,batch_size=128,T=100):
+    def train(self,Inputs,Targets,n_steps,optimizer,criterion,batch_size=128,T=100,pin_task=False):
         dataset = TensorDataset(Inputs, Targets)
         losses = []
         best_loss = float('inf')
+        hidden = None
         for epoch in tqdm(range(n_steps)):
             dataloader = DataLoader(dataset,batch_size,shuffle=True)
             for X, Y in dataloader:
                 optimizer.zero_grad()
                 ####### outputs from the rnn ########
-                prediction, hidden, _ = self.forward(X, None)
+                if pin_task:
+                    hidden = Y[:,0,:]
+
+                prediction, _, _ = self.forward(X, hidden)
 
                 ### calculate the loss
                 loss = criterion(prediction, Y)
@@ -87,12 +91,14 @@ class Three_Bodies_RNN(nn.Module):
                     self.best_model = copy.deepcopy(self.state_dict())
                     best_loss = loss
 
-            if epoch % (n_steps/10) == 0:
+            if epoch % (n_steps//50) == 0:
                 print(int(epoch / (n_steps / 10)),'/10 --- loss = {:.6f}, best = {:.6f}'.format(loss.cpu().data, best_loss.cpu().data))
-                if self.task =="FF":
+                if self.task == "FF":
                     K_Bit_Flipflop_task.draw_mem_charts(Inputs.to("cpu"),Targets.cpu(),Prediction=prediction.cpu(),idx=0,K=Inputs.shape[2])
                 elif self.task == "Sin":
                     sin_task.plot_sin(T,Targets.cpu(),prediction.cpu(),loss)
+                elif self.task == "PIN":
+                    PIN_task.plot_proteins(Targets[0].T.cpu(),prediction[0].T.cpu())
 
 
         with torch.no_grad():
@@ -101,6 +107,11 @@ class Three_Bodies_RNN(nn.Module):
           print('Loss: ', loss.data.item())
         return losses
 
+    def evaluate(self,Inputs,Targets):
+        with torch.no_grad():
+            predictions = self.forward(Inputs,None)[0].sign()
+            accuracy = (Targets == predictions).float().mean()
+            return accuracy
 
 class Full_Rank_RNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, nonlinearity = 'tanh', task = "FF"):
@@ -137,17 +148,16 @@ class Full_Rank_RNN(nn.Module):
         output = self.fc(r_out)
         return output , hidden , r_out
 
-    def train(self,Inputs,Targets,n_steps,optimizer,criterion,batch_size=128,T=100):
+    def train(self,Inputs,Targets,n_steps,optimizer,criterion,batch_size=128,T=100,hidden=None):
         dataset = TensorDataset(Inputs, Targets)
         losses = []
         best_loss = float('inf')
         for epoch in tqdm(range(n_steps)):
-            hidden = None
             dataloader = DataLoader(dataset,batch_size,shuffle=True)
             for X, Y in dataloader:
                 optimizer.zero_grad()
                 ####### outputs from the rnn ########
-                prediction, hidden, _ = self.forward(X, None)
+                prediction, _, _ = self.forward(X, hidden)
 
                 ### calculate the loss
                 loss = criterion(prediction, Y)
@@ -171,6 +181,8 @@ class Full_Rank_RNN(nn.Module):
                     K_Bit_Flipflop_task.draw_mem_charts(Inputs.to("cpu"),Targets.cpu(),Prediction=prediction.cpu(),idx=0,K=Inputs.shape[2])
                 elif self.task == "Sin":
                     sin_task.plot_sin(T,Targets.cpu(),prediction.cpu(),loss)
+                elif self.task == "PIN":
+                    PIN_task.plot_proteins(Targets[0].T.cpu(),prediction[0].T.cpu())
 
 
         with torch.no_grad():
@@ -178,6 +190,12 @@ class Full_Rank_RNN(nn.Module):
           loss = criterion(prediction, Targets).cpu()
           print('Loss: ', loss.data.item())
         return losses
+
+    def evaluate(self, Inputs, Targets):
+        with torch.no_grad():
+            predictions = self.forward(Inputs, None)[0].sign()
+            accuracy = (Targets == predictions).float().mean()
+            return accuracy
 
 class Low_Rank_RNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, rank=1, nonlinearity = torch.tanh, task = "FF"):
@@ -228,7 +246,7 @@ class Low_Rank_RNN(nn.Module):
 
         return output , hidden , r_out
 
-    def lr_train(self,Inputs,tar,target_model,n_steps,optimizer,criterion,batch_size=128,T=100):
+    def lr_train(self,Inputs,tar,target_model,n_steps,optimizer,criterion,batch_size=128,T=100,hidden=None):
         Targets = target_model(Inputs,None)[2].detach().clone()
         dataset = TensorDataset(Inputs, Targets)
         losses = []
@@ -238,7 +256,7 @@ class Low_Rank_RNN(nn.Module):
             for X, Y in dataloader:
                 optimizer.zero_grad()
                 ####### outputs from the rnn ########
-                _, _, prediction = self.forward(X, None)
+                _, _, prediction = self.forward(X, hidden)
                 ### calculate the loss
                 loss = criterion(prediction, Y)
                 ### perform backprop and update weights
@@ -262,6 +280,8 @@ class Low_Rank_RNN(nn.Module):
                     K_Bit_Flipflop_task.draw_mem_charts(Inputs.cpu(),tar.cpu(),Prediction=prediction.cpu(),idx=0,K=Inputs.shape[2])
                 elif self.task == "Sin":
                     sin_task.plot_sin(T,tar.cpu(),prediction.cpu(),loss)
+                elif self.task == "PIN":
+                    PIN_task.plot_proteins(Targets[0].T.cpu(),prediction[0].T.cpu())
 
         with torch.no_grad():
             _,_,prediction = self.forward(Inputs, None)
@@ -270,7 +290,7 @@ class Low_Rank_RNN(nn.Module):
 
         return losses
 
-    def train(self,Inputs,Targets,n_steps,optimizer,criterion,batch_size=128,T=100):
+    def train(self,Inputs,Targets,n_steps,optimizer,criterion,batch_size=128,T=100,hidden=None):
         dataset = TensorDataset(Inputs, Targets)
         losses = []
         best_loss = float('inf')
@@ -279,7 +299,7 @@ class Low_Rank_RNN(nn.Module):
             for X, Y in dataloader:
                 optimizer.zero_grad()
                 ####### outputs from the rnn ########
-                prediction, hidden, _ = self.forward(X, None)
+                prediction, _, _ = self.forward(X, hidden)
 
                 ### calculate the loss
                 loss = criterion(prediction, Y)
@@ -303,6 +323,8 @@ class Low_Rank_RNN(nn.Module):
                     K_Bit_Flipflop_task.draw_mem_charts(Inputs.to("cpu"),Targets.cpu(),Prediction=prediction.cpu(),idx=0,K=Inputs.shape[2])
                 elif self.task == "Sin":
                     sin_task.plot_sin(T,Targets.cpu(),prediction.cpu(),loss)
+                elif self.task == "PIN":
+                    PIN_task.plot_proteins(Targets[0].T.cpu(),prediction[0].T.cpu())
 
         with torch.no_grad():
           prediction, _ , _ = self.forward(Inputs, None)
@@ -311,6 +333,11 @@ class Low_Rank_RNN(nn.Module):
 
         return losses
 
+    def evaluate(self, Inputs, Targets):
+        with torch.no_grad():
+            predictions = self.forward(Inputs, None)[0].sign()
+            accuracy = (Targets == predictions).float().mean()
+            return accuracy
 
 class Low_Rank_Three_Way_RNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, rank=1, nonlinearity = torch.tanh, task = "FF"):
@@ -365,7 +392,7 @@ class Low_Rank_Three_Way_RNN(nn.Module):
 
         return output , hidden , r_out
 
-    def train(self,Inputs,Targets,n_steps,optimizer,criterion,batch_size=128,T=100):
+    def train(self,Inputs,Targets,n_steps,optimizer,criterion,batch_size=128,T=100,hidden=None):
         dataset = TensorDataset(Inputs, Targets)
         losses = []
         best_loss = float('inf')
@@ -374,7 +401,7 @@ class Low_Rank_Three_Way_RNN(nn.Module):
             for X, Y in dataloader:
                 optimizer.zero_grad()
                 ####### outputs from the rnn ########
-                prediction, hidden, _ = self.forward(X, None)
+                prediction, _, _ = self.forward(X, hidden)
 
                 ### calculate the loss
                 loss = criterion(prediction, Y)
@@ -398,6 +425,8 @@ class Low_Rank_Three_Way_RNN(nn.Module):
                     K_Bit_Flipflop_task.draw_mem_charts(Inputs.to("cpu"),Targets.cpu(),Prediction=prediction.cpu(),idx=0,K=Inputs.shape[2])
                 elif self.task == "Sin":
                     sin_task.plot_sin(T,Targets.cpu(),prediction.cpu(),loss)
+                elif self.task == "PIN":
+                    PIN_task.plot_proteins(Targets[0].T.cpu(),prediction[0].T.cpu())
 
 
         with torch.no_grad():
@@ -407,7 +436,7 @@ class Low_Rank_Three_Way_RNN(nn.Module):
 
         return losses
 
-    def lr_train(self,Inputs,tar,target_model,n_steps,optimizer,criterion,batch_size=128,T=100):
+    def lr_train(self,Inputs,tar,target_model,n_steps,optimizer,criterion,batch_size=128,T=100,hidden=None):
         Targets = target_model(Inputs,None)[2].detach().clone()
         dataset = TensorDataset(Inputs, Targets)
         losses = []
@@ -417,7 +446,7 @@ class Low_Rank_Three_Way_RNN(nn.Module):
             for X, Y in dataloader:
                 optimizer.zero_grad()
                 ####### outputs from the rnn ########
-                _, _, prediction = self.forward(X, None)
+                _, _, prediction = self.forward(X, hidden)
                 ### calculate the loss
                 loss = criterion(prediction, Y)
                 ### perform backprop and update weights
@@ -441,6 +470,8 @@ class Low_Rank_Three_Way_RNN(nn.Module):
                     K_Bit_Flipflop_task.draw_mem_charts(Inputs.cpu(),tar.cpu(),Prediction=prediction.cpu(),idx=0,K=Inputs.shape[2])
                 elif self.task == "Sin":
                     sin_task.plot_sin(T,tar.cpu(),prediction.cpu(),loss)
+                elif self.task == "PIN":
+                    PIN_task.plot_proteins(Targets[0].T.cpu(),prediction[0].T.cpu())
 
         with torch.no_grad():
             _,_,prediction = self.forward(Inputs, None)
@@ -448,3 +479,12 @@ class Low_Rank_Three_Way_RNN(nn.Module):
             print('Loss: ', loss.data.item())
 
         return losses
+
+    def evaluate(self, Inputs, Targets):
+        with torch.no_grad():
+            predictions = self.forward(Inputs, None)[0].sign()
+            accuracy = (Targets == predictions).float().mean()
+            return accuracy
+
+    def lr_to_tensor(self):
+        return torch.stack([(lr_rnn.U[:, [i]].unsqueeze(2) * (lr_rnn.V[:, [i]] @ lr_rnn.W[:, [i]].T)) for i in range(3)]).sum(dim=0)

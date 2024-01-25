@@ -51,3 +51,6 @@ def generate_mem_data(n_batch,T,K):
     X = X.transpose(1,2).to(DEVICE)
     Y = Y.transpose(1,2).to(DEVICE)
     return X , Y
+
+
+
