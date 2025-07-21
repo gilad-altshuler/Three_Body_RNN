@@ -1,4 +1,4 @@
-# Three_Bodies_RNN
+# Beyond_Linear_Summation-Three_Body_RNNs
 
 ## About
 For research in the field of computational neuroscience - generating Three Bodies RNN and analyzing the new dynamics.
