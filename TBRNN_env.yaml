@@ -1,0 +1,16 @@
+name: TBRNN_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy
+  - matplotlib
+  - tqdm
+  - scikit-learn
+  - pandas
+  - pytorch
+  - pip
+  - pip:
+      - tensorly>=0
+      - slicetca
