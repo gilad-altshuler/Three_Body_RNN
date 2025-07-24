@@ -69,7 +69,7 @@ def generate_data(data_size,T,K):
     Y = Y.transpose(1,2).to(DEVICE)
     return X , Y
 
-def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_batch', r2_all=False):
+def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_batch', r2_all=False,reduction='mean'):
     """
     Evaluate the model on the K-Bit Flipflop task.
     :param model: The model to evaluate
@@ -79,6 +79,7 @@ def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_
     :param rates: (Optional) If True, apply output nonlinearity to the trajectory. Default is False.
     :param r2_mode: Mode for R2 score calculation ('per_batch', 'per_time_step', or 'per_neuron'). Default is 'per_batch'.
     :param r2_all: If True, return R2 scores for all modes, otherwise return mean R2 score. Default is False.
+    :param reduction: Reduction method for the loss ('mean', 'sum' or 'none'). Default is 'mean'.
     :return: Tuple of (accuracy, mse error, R2 score, and teacher-student trajectory mse error)
     """
     from sklearn.metrics import r2_score
@@ -109,8 +110,15 @@ def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_
         
 
 def accuracy(prediction,target):
+    """
+    Calculate the accuracy of the model's predictions.
+    :param prediction: Prediction tensor of shape (batch_size, time_steps, output_size)
+    :param target: Target tensor of shape (batch_size, time_steps, output_size)
+    :return: General accuracy as a float
+    """
     sign_prediction = prediction.sign()
-    acc = (sign_prediction == target).float().mean().item()
+    sign_target = target.sign()
+    acc = (sign_prediction == sign_target).float().mean().item()
     return acc
 
 

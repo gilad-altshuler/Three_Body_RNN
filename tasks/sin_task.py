@@ -65,7 +65,7 @@ def plot(input,target,prediction=None,idx=0):
     plt.show()
     plt.close()
 
-def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_batch', r2_all=False, reduction='mean'):
+def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_batch', r2_all=False,reduction='mean'):
     """
     Evaluate the model on the Sine prediction task.
     :param model: The model to evaluate
@@ -75,7 +75,8 @@ def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_
     :param rates: (Optional) If True, apply output nonlinearity to the model trajectory. Default is False.
     :param r2_mode: Mode for R2 score calculation ('per_batch', 'per_time_step', or 'per_neuron'). Default is 'per_batch'.
     :param r2_all: If True, return R2 scores for all modes, otherwise return mean R2 score. Default is False.
-    :return: Tuple of (mse error, R2 score, and teacher-student trajectory mse error) if teacher_traj is not None, (mse error, None, None) otherwise
+    :param reduction: Reduction method for the loss ('mean', 'sum' or 'none'). Default is 'mean'.
+    :return: Tuple of (accuracy, mse error, R2 score, and teacher-student trajectory mse error) if teacher_traj is not None, otherwise (accuracy, mse error, None, None)
     """
     from sklearn.metrics import r2_score
     
@@ -85,6 +86,7 @@ def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_
         if rates:
           trajectory = model.output_nonlinearity(trajectory)
           teacher_traj = model.output_nonlinearity(teacher_traj)
+        acc = accuracy(prediction,target)
         error = torch.nn.functional.mse_loss(prediction, target,reduction=reduction)
         if reduction == 'none':
           error = error.mean(axis=(1,2))
@@ -101,6 +103,18 @@ def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_
                 r2 = np.array(r2).mean().item()
 
             ts_error = torch.nn.functional.mse_loss(trajectory, teacher_traj).item()
-            return error,r2,ts_error
+            return acc,error,r2,ts_error
         else:
-            return error,None,None
+            return acc,error,None,None
+        
+def accuracy(prediction,target):
+    """
+    Calculate the accuracy of the model's predictions.
+    :param prediction: Prediction tensor of shape (batch_size, time_steps, output_size)
+    :param target: Target tensor of shape (batch_size, time_steps, output_size)
+    :return: General accuracy as a float
+    """
+    sign_prediction = prediction.sign()
+    sign_target = target.sign()
+    acc = (sign_prediction == sign_target).float().mean().item()
+    return acc
