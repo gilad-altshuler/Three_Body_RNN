@@ -58,6 +58,7 @@ for K in "${KS[@]}"; do
       --lint_lr 1e-2 5e-3 \
       --lint_epochs 80000 \
       --sched_epochs 20000 \
+      --rates \
       > "${LOG_DIR}/output_${i}.log" 2>&1 &
 
     pid=$!
