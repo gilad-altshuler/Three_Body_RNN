@@ -88,27 +88,29 @@ def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_
     with torch.no_grad():
         prediction, _, trajectory = model(input, None)
         if rates:
-            trajectory = model.output_nonlinearity(trajectory)
-
+          trajectory = model.output_nonlinearity(trajectory)
+          teacher_traj = model.output_nonlinearity(teacher_traj)
         acc = accuracy(prediction,target)
-        error = torch.nn.functional.mse_loss(prediction, target).item()
+        error = torch.nn.functional.mse_loss(prediction, target,reduction=reduction)
+        if reduction == 'none':
+          error = error.mean(axis=(1,2))
         if teacher_traj is not None:
             if r2_mode == 'per_batch':
-                r2 = np.array([r2_score(teacher_traj[i].detach().cpu().numpy(), trajectory[i].detach().cpu().numpy()) for i in range(len(teacher_traj))])
+                r2 = [r2_score(teacher_traj[i].detach().cpu().numpy(), trajectory[i].detach().cpu().numpy()) for i in range(len(teacher_traj))]
             elif r2_mode == 'per_time_step':
-                r2 = np.array([r2_score(teacher_traj[:,i].detach().cpu().numpy(), trajectory[:,i].detach().cpu().numpy()) for i in range(teacher_traj.shape[1])])
+                r2 = [r2_score(teacher_traj[:,i].detach().cpu().numpy(), trajectory[:,i].detach().cpu().numpy()) for i in range(teacher_traj.shape[1])]
             elif r2_mode == 'per_neuron':
-                r2 = np.array([r2_score(teacher_traj[:,:,i].detach().cpu().numpy(), trajectory[:,:,i].detach().cpu().numpy()) for i in range(teacher_traj.shape[2])])
+                r2 = [r2_score(teacher_traj[:,:,i].detach().cpu().numpy(), trajectory[:,:,i].detach().cpu().numpy()) for i in range(teacher_traj.shape[2])]
             else:
                 raise ValueError("Invalid r2_mode. Choose 'per_batch', 'per_time_step' or 'per_neuron'.")
             if not r2_all:
-                r2 = r2.mean().item()
+                r2 = np.array(r2).mean().item()
+
             ts_error = torch.nn.functional.mse_loss(trajectory, teacher_traj).item()
             return acc,error,r2,ts_error
         else:
             return acc,error,None,None
         
-
 def accuracy(prediction,target):
     """
     Calculate the accuracy of the model's predictions.
