@@ -19,4 +19,4 @@ for m in methods:
 
     stacked = np.stack(data)
     print("✅ Loaded shape:", stacked.shape)
-    np.save(f"all_{m}.npy", stacked)
+    np.save(f"{base}/all_{m}.npy", stacked)
