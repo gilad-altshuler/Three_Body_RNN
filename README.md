@@ -14,17 +14,23 @@ pre-synaptic summation (left) while biophysics is more complex and input couplin
 present (right). 
 
 
-## Files in The Repository
+## Regenerate paper figures
 
-|File name         | Purpose |
+|Figure number         | Regenerate |
 |----------------------|------|
-|`Three Bodies Network.ipynb`|Main code section for the model and trials|
-|`Models.py`|Proposed models code: <br> (1) Full Rank RNN <br> (2) Full Rank Three Bodies Network <br> (3) Low Rank RNN <br> (4) Low Rank Three Bodies Network|
+|1.|Created manually in Biorender.com|
+|2.|Created manually in Biorender.com|
+|3.|`1_Validation.ipynb`|
+|4.|`2_Solution_space.ipynb`|
+|5.|`2_Solution_space.ipynb`|
 
 ## Run
-
-To run experiments, please run `XXX.ipynb` with all the utility files.
-Choose task as subsection of the notebook. 
+### 
+```
+train_scripts/student_teacher/train_student_teacher_continuous.ipynb
+train_scripts/student_teacher/train_student_teacher_poisson.ipynb
+train_scripts/student_teacher/train_student_teacher_conditioning.ipynb
+```
 
 ## Results
 
