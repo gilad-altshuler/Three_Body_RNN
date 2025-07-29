@@ -42,4 +42,6 @@ Next, please run the notebook:
 
 [notebooks/1_Validation.ipynb](notebooks/1_Validation.ipynb)
 
-*May be run in google colab or in linux terminal*
+*(May be run in google colab or in linux terminal)*
+
+### Expanding solution space
