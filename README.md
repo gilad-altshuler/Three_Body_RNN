@@ -28,20 +28,29 @@ present (right).
 ### Start
 To start please create a conda environment by:
 ```
-cd Beyond_Linear_Summation-Three_Body_RNNs
+cd Three_Body_RNN
 conda env create -f TBRNN_env.yaml
 ```
 (on Linux)
 
 ### Validation
-First, you can reproduce (optional) validation by running train script with nohup:
+First, to reproduce (optional-the used data already exists in data/validation dir) the validation data - run train script with nohup:
 ```
 nohup training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
 ```
-Next, please run the notebook:
+Next, run the notebook:
 
 [notebooks/1_Validation.ipynb](notebooks/1_Validation.ipynb)
 
 *(May be run in google colab or in linux terminal)*
 
 ### Expanding solution space
+To reproduce (optional-the used data already exists in data/solution_space dir) - run train script with nohup:
+```
+nohup training_scripts/solution_space/run_multiple.sh > master_log.txt 2>&1 &
+```
+Next, run the notebook:
+
+[notebooks/2_Solution_space.ipynb](notebooks/2_Solution_space.ipynb)
+
+*(May be run in google colab or in linux terminal)*
