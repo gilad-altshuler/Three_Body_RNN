@@ -1,9 +1,9 @@
 # Beyond_Linear_Summation-Three_Body_RNNs
 
 ## About
-For research in the field of computational neuroscience - generating Three Bodies RNN and analyzing the new dynamics.
+Code repository accompaning the paper "Beyond linear summation: Three-Body RNNs for modeling complex neural and biological systems"
 
-<img width="630" alt="three bodies net" src="https://github.com/gilad-altshuler/Three_Bodies_RNN/assets/119232867/57a59d0a-ecc1-474a-aa9d-9f4480d78ff4">
+<img width="2250" height="1500" alt="Three Body interactions" src="https://github.com/user-attachments/assets/0a406309-1f0f-4786-9e3c-6a9fe0a1ce11" />
 
 
 
