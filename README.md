@@ -22,7 +22,7 @@ present (right).
 |2. Neuroscience tasks and their biological gene expression counterparts|Created manually in Biorender.com|
 |3. Theory validation on K-Bit Flipflop task|`1_Validation.ipynb`|
 |4. Expanding solution space|`2_Solution_space.ipynb`|
-|5. Mapping tasks space|`2_Solution_space.ipynb`|
+|5. Mapping tasks space|`3_Teacher_Student.ipynb`|
 
 ## Run
 ### Start
