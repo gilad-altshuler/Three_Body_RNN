@@ -16,13 +16,13 @@ present (right).
 
 ## Regenerate paper figures
 
-|Figure number         | Regenerate |
+|Figure         | Reproduce |
 |----------------------|------|
-|1.|Created manually in Biorender.com|
-|2.|Created manually in Biorender.com|
-|3.|`1_Validation.ipynb`|
-|4.|`2_Solution_space.ipynb`|
-|5.|`2_Solution_space.ipynb`|
+|1. Motivation: Three-body interactions|Created manually in Biorender.com|
+|2. Neuroscience tasks and their biological gene expression counterparts|Created manually in Biorender.com|
+|3. Theory validation on K-Bit Flipflop task|`1_Validation.ipynb`|
+|4. Expanding solution space|`2_Solution_space.ipynb`|
+|5. Mapping tasks space|`2_Solution_space.ipynb`|
 
 ## Run
 ### 
