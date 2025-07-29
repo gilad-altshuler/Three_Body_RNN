@@ -34,7 +34,9 @@ conda env create -f TBRNN_env.yaml
 (on Linux)
 
 ### Validation
-First, you can reproduce validation by running train script (with nohup):
+First, you can reproduce (optional) validation by running train script with nohup:
 ```
-training_scripts/teacher_student/run_multiple_flipflop.sh > master_log.txt 2>&1 &
+nohup training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
 ```
+Next, you can run:
+[View validation notebook](notebooks/1_Validation.ipynb)
