@@ -39,5 +39,7 @@ First, you can reproduce (optional) validation by running train script with nohu
 nohup training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
 ```
 Next, please run the notebook:
+
 [notebooks/1_Validation.ipynb](notebooks/1_Validation.ipynb)
+
 ** May run in google colab or in linux terminal
