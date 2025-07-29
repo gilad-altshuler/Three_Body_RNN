@@ -33,6 +33,10 @@ conda env create -f TBRNN_env.yaml
 ```
 (on Linux)
 
-## Results
+### Validation
+First, you can reproduce validation by running train script (with nohup):
+```
+training_scripts/teacher_student/run_multiple_flipflop.sh > master_log.txt 2>&1 &
+```
 
 
