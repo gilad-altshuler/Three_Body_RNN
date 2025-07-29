@@ -28,15 +28,16 @@ present (right).
 ### Start
 To start please create a conda environment by:
 
-1) ```cd Beyond_Linear_Summation-Three_Body_RNNs```
-
-2) ```conda env create -f TBRNN_env.yaml``` (on Linux)
-
+1)
 ```
-train_scripts/student_teacher/train_student_teacher_continuous.ipynb
-train_scripts/student_teacher/train_student_teacher_poisson.ipynb
-train_scripts/student_teacher/train_student_teacher_conditioning.ipynb
+cd Beyond_Linear_Summation-Three_Body_RNNs
 ```
+
+3)
+```
+conda env create -f TBRNN_env.yaml
+```
+(on Linux)
 
 ## Results
 
