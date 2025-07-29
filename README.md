@@ -23,7 +23,7 @@ present (right).
 |Fig 3. Theory validation on K-Bit Flipflop task|`1_Validation.ipynb`|
 |Fig 4. Expanding solution space|`2_Solution_space.ipynb`|
 |Fig 5. Mapping tasks space|`3_Teacher_Student.ipynb`|
-|Table 1.Validation results on K-bit Flip-Flop and sine wave synthetic tasks|`3_Teacher_Student.ipynb`|
+|Table 1. Teacher-student inference results on K-bit Flip-Flop and sine wave synthetic tasks|`3_Teacher_Student.ipynb`|
 
 ## Run
 ### Start
