@@ -27,12 +27,8 @@ present (right).
 ## Run
 ### Start
 To start please create a conda environment by:
-
-1)```
-cd Beyond_Linear_Summation-Three_Body_RNNs
 ```
-
-2)```
+cd Beyond_Linear_Summation-Three_Body_RNNs
 conda env create -f TBRNN_env.yaml
 ```
 (on Linux)
