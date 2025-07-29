@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_PATH="$(realpath "$0")"
+ROOT="$(dirname "$(dirname "$(dirname "$SCRIPT_PATH")")")"
 N=30
 START=1
 MAX_JOBS_PER_GPU=3
@@ -8,7 +10,7 @@ NUM_GPUS=${#GPUS[@]}
 KS=(1 2 3)
 RANKS=(1 6)
 
-mkdir -p Three_Body_RNN/outputs/teacher_student
+mkdir -p "$ROOT/outputs/teacher_student"
 
 # Track jobs using PID->GPU assignment
 declare -A JOB_GPU_COUNT
@@ -44,11 +46,11 @@ for K in "${KS[@]}"; do
       sleep 5
     done
 
-    LOG_DIR="Three_Body_RNN/outputs/teacher_student/${LOG_NAME}"
+    LOG_DIR="$ROOT/outputs/teacher_student/${LOG_NAME}"
     mkdir -p "$LOG_DIR"
 
-    CUDA_VISIBLE_DEVICES=$GPU_ID nohup /home/gilada/miniconda3/envs/TBRNN_env/bin/python \
-      /home/gilada/Three_Body_RNN/training_scripts/teacher_student/train_teacher_student.py \
+    CUDA_VISIBLE_DEVICES=$GPU_ID nohup python \
+      "$ROOT/training_scripts/teacher_student/train_teacher_student.py" \
       --run_name "${TASK_NAME}/${K}/$(printf "%03d" $i)" \
       --t_rank "$K" \
       --ranks "${RANKS[@]}" \
