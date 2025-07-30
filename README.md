@@ -20,7 +20,7 @@ present (right).
 |----------------------|------|
 |Fig 1. Motivation: Three-body interactions|Created manually in Biorender.com|
 |Fig 2. Neuroscience tasks and their biological gene expression counterparts|Created manually in Biorender.com|
-|Fig 3. Theory validation on K-Bit Flipflop task|`1_Validation.ipynb`|
+|Fig 3. Theory validation on K-Bit Flipflop task|`1_Low_rank_TBRNN_validation.ipynb`|
 |Fig 4. Expanding solution space|`2_Solution_space.ipynb`|
 |Fig 5. Mapping tasks space|`3_Teacher_Student.ipynb`|
 |Table 1. Teacher-student inference results on K-bit Flip-Flop and sine wave synthetic tasks|`3_Teacher_Student.ipynb`|
@@ -34,14 +34,14 @@ conda env create -f TBRNN_env.yaml
 ```
 (on Linux)
 
-### Validation
+### Low-rank TBRNN validation
 First, to reproduce (optional-the used data already exists in data/validation dir) the validation data - run train script with nohup:
 ```
 nohup training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
-[notebooks/1_Validation.ipynb](notebooks/1_Validation.ipynb)
+[notebooks/1_Low_rank_TBRNN_validation.ipynb](notebooks/1_Low_rank_TBRNN_validation.ipynb)
 
 *(May be run in google colab or in linux terminal)*
 
