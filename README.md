@@ -42,7 +42,7 @@ nohup training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
 Next, run the notebook:
 
 [notebooks/1_Low_rank_TBRNN_validation.ipynb](notebooks/1_Low_rank_TBRNN_validation.ipynb)
-*(May be run in google colab or in linux terminal)*
+*(May be run via **google colab** or **linux terminal**)*
 
 ### Expanding solution space
 To reproduce (optional-the used data already exists in data/solution_space dir) - run train script with nohup:
@@ -52,8 +52,10 @@ nohup training_scripts/solution_space/run_multiple.sh > master_log.txt 2>&1 &
 Next, run the notebook:
 
 [notebooks/2_Solution_space.ipynb](notebooks/2_Solution_space.ipynb)
-*(May be run in **google colab** or in **linux terminal**)*
+*(May be run via **google colab** or **linux terminal**)*
 
-***In colab** - make sure you have "runs" directory obtained with "training_scripts/solution_space/run_multiple.sh" - copy drive location and paste on input line at first running cell*
+***In colab** - make sure you have "runs" directory obtained with "training_scripts/solution_space/run_multiple.sh" + copy drive location and paste on input line at first running cell*
 
 ***In linux** - make sure you have "runs" directory obtained with "training_scripts/solution_space/run_multiple.sh*
+
+>abc
