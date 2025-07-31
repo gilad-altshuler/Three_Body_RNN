@@ -36,7 +36,7 @@ def run_methods(Model_class,lr_class,run_name,ranks=[1,6],data_size=128,
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=end_factor,total_iters=epochs)
 
         _ = train(teacher,input,target,epochs,optimizer,criterion,
-                    scheduler=scheduler,mask_train=None,batch_size=data_size,T=T,
+                    scheduler=scheduler,mask_train=None,batch_size=data_size,
                     hidden=None,clip_gradient=None,keep_best=True,plot=False)
 
         eps = 0.05

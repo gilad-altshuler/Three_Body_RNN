@@ -1,11 +1,9 @@
 import copy
-import torch
 import numpy as np
+import torch
 from torch import nn
 from torch.utils.data import TensorDataset, DataLoader
-import tasks.sin_task as sin_task
-import tasks.K_Bit_Flipflop_task as K_Bit_Flipflop_task
-import tasks.MultiFate_task as MultiFate_task
+from tasks import sin_task, K_Bit_Flipflop_task, MultiFate_task
 import utils
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -15,17 +13,40 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MODELS = ["rnn", "tbrnn", "hornn", "gru"]
 
 def get_model_str(model_class):
+    """
+    Get a string representation of the model class based on its name.
+    :param model_class (type): The class of the model.
+    :return: A string representation of the model class.
+    """
     model_name = model_class.__name__.lower()  # Convert class name to lowercase
     for keyword in sorted(MODELS, key=len, reverse=True):
         if keyword in model_name:
             return keyword
     return None  # Return None if none of the keywords are found
 
-def train(model,input,target,n_steps,optimizer,criterion,
-          scheduler=None,mask_train=None,batch_size=128,T=100,hidden=None,
+def train(model,input,target,epochs,optimizer,criterion,
+          scheduler=None,mask_train=None,batch_size=128,hidden=None,
           clip_gradient=None,keep_best=True,plot=False):
+    """ 
+    Train the model on the provided input and target data.
+    :param model: The model to be trained.
+    :param input: Input tensor of shape (batch_size, time_steps, input_size).
+    :param target: Target tensor of shape (batch_size, time_steps, output_size).
+    :param epochs: Number of epochs to train the model.
+    :param optimizer: Optimizer to use for training.
+    :param criterion: Loss function to use for training.
+    :param scheduler: Learning rate scheduler (optional).
+    :param mask_train: Mask for training data (optional).
+    :param batch_size: Batch size for training.
+    :param hidden: Initial hidden state for the model (optional).
+    :param clip_gradient: Gradient clipping value (optional).
+    :param keep_best: Whether to keep the best model based on validation loss.
+    :param plot: Whether to visualize the training progress.
+    :return: List of losses recorded during training.
+    """
+    B,T,N = input.shape
     if hidden is None:
-        hidden = torch.zeros(input.shape[0],model.hidden_dim).to(DEVICE)
+        hidden = torch.zeros(B,N).to(DEVICE)
     dataset = TensorDataset(input,target,hidden)
     losses = []
     best_loss = torch.tensor(float('inf')).to(DEVICE)
@@ -37,7 +58,7 @@ def train(model,input,target,n_steps,optimizer,criterion,
     else:
         mask_t = torch.ones(T,device=DEVICE)
 
-    for epoch in tqdm(range(n_steps)):
+    for epoch in tqdm(range(epochs)):
         dataloader = DataLoader(dataset,batch_size,shuffle=True)
         for X, Y, b_hidden in dataloader:
             optimizer.zero_grad()
@@ -66,8 +87,8 @@ def train(model,input,target,n_steps,optimizer,criterion,
                 print('Early stopping at epoch {} with loss {:.4f}'.format(epoch, loss.cpu().data.item()))
                 break
 
-        if epoch % (n_steps/10) == 0:
-            print(int(epoch / (n_steps / 10)),
+        if epoch % (epochs/10) == 0:
+            print(int(epoch / (epochs / 10)),
                     '/10 --- loss = {:.6f}, best = {:.6f}'.format(loss.cpu().data, best_loss.cpu().data))
             
             if last_epoch_best_loss - best_loss < eps:
