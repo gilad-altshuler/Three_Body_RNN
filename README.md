@@ -37,7 +37,7 @@ conda env create -f TBRNN_env.yaml
 ### Low-rank TBRNN validation
 First, to reproduce (optional-the used data already exists in data/validation dir) the validation data - run train script with nohup:
 ```
-nohup training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
+training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
@@ -47,7 +47,7 @@ Next, run the notebook:
 ### Expanding solution space
 To reproduce (optional-the used data already exists in data/solution_space dir) - run train script with nohup:
 ```
-nohup training_scripts/solution_space/run_multiple.sh > master_log.txt 2>&1 &
+training_scripts/solution_space/run_multiple.sh > master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
