@@ -53,5 +53,4 @@ nohup training_scripts/solution_space/run_multiple.sh > master_log.txt 2>&1 &
 Next, run the notebook:
 
 [notebooks/2_Solution_space.ipynb](notebooks/2_Solution_space.ipynb)
-
 *(May be run in google colab or in linux terminal)*
