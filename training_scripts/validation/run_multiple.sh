@@ -29,6 +29,6 @@ done
 
 wait
 
-# Now call collect.py after all the jobs are finished
+# Now call collect data after all the jobs are finished
 
-python "$ROOT/training_scripts/validation/collect.py"
+python "$ROOT/training_scripts/validation/collect_data.py"

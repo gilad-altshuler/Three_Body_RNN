@@ -25,3 +25,6 @@ for i in $(seq $START $((START + N - 1))); do
 done
 
 wait
+
+# Now call collect data after all the jobs are finished
+python "$ROOT/training_scripts/solution_space/collect_data.py"
