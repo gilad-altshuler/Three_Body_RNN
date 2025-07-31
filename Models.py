@@ -38,13 +38,14 @@ def train(model,input,target,epochs,optimizer,criterion,
     :param scheduler: Learning rate scheduler (optional).
     :param mask_train: Mask for training data (optional).
     :param batch_size: Batch size for training.
-    :param hidden: Initial hidden state for the model (optional).
+    :param hidden: Initial hidden state for the model of shape (batch_size, hidden_dim) (optional).
     :param clip_gradient: Gradient clipping value (optional).
     :param keep_best: Whether to keep the best model based on validation loss.
     :param plot: Whether to visualize the training progress.
     :return: List of losses recorded during training.
     """
-    B,T,N = input.shape
+    B,T,_ = input.shape
+    N = model.hidden_dim
     if hidden is None:
         hidden = torch.zeros(B,N).to(DEVICE)
     dataset = TensorDataset(input,target,hidden)
