@@ -31,11 +31,12 @@ To start please create a conda environment by:
 ```
 cd Three_Body_RNN
 conda env create -f TBRNN_env.yaml
+conda activate TBRNN_env
 ```
 (on Linux)
 
 ### Low-rank TBRNN validation
-First, to reproduce (optional-the used data already exists in data/validation dir) the validation data - run train script with nohup:
+To reproduce the low-rank and theory validation data - run train script with nohup:
 ```
 training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
 ```
@@ -43,9 +44,10 @@ Next, run the notebook:
 
 [notebooks/1_Low_rank_TBRNN_validation.ipynb](notebooks/1_Low_rank_TBRNN_validation.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
-
+> Note that notebook can be run independently without the reproduction train - data used already located in data/validation directory
+> 
 ### Expanding solution space
-To reproduce (optional-the used data already exists in data/solution_space dir) - run train script with nohup:
+To reproduce - run train script with nohup:
 ```
 training_scripts/solution_space/run_multiple.sh > master_log.txt 2>&1 &
 ```
@@ -53,7 +55,4 @@ Next, run the notebook:
 
 [notebooks/2_Solution_space.ipynb](notebooks/2_Solution_space.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
-
->**In colab** - make sure you have "runs" directory obtained with "training_scripts/solution_space/run_multiple.sh" + copy drive location and paste on input line at first running cell
-
->**In linux** - make sure you have "runs" directory obtained with "training_scripts/solution_space/run_multiple.sh
+> Note that notebook can be run independently without the reproduction train - data used already located in data/solution_space directory 
