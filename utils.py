@@ -384,7 +384,7 @@ def gram_linear(X):
     """Compute linear kernel Gram matrix."""
     return X @ X.T
 
-def cka(X, Y):
+def heavy_cka(X, Y):
     """Compute CKA (linear kernel) between X and Y."""
     X = X - X.mean(0)
     Y = Y - Y.mean(0)
@@ -404,3 +404,9 @@ def cka(X, Y):
     torch.cuda.empty_cache()
 
     return hsic / (norm_x.sqrt() * norm_y.sqrt())
+
+def CKA(X, Y):
+    """
+    Calculates CKA.
+    """
+    return (np.linalg.norm(X.T @ Y) ** 2) / np.linalg.norm(X.T @ X) / np.linalg.norm(Y.T @ Y)
