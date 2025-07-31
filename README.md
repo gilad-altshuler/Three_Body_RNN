@@ -55,4 +55,5 @@ Next, run the notebook:
 *(May be run in google colab or in linux terminal)*
 
 *In colab - make sure you have "runs" directory obtained with "training_scripts/solution_space/run_multiple.sh" - copy drive location and paste on input line at first running cell*
+
 *In linux - make sure you have "runs" directory obtained with "training_scripts/solution_space/run_multiple.sh*
