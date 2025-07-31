@@ -7,7 +7,7 @@ import torch
 from torch import nn
 
 from Models import *
-from low_rank_procedures import LINT_method
+from low_rank_methods import LINT_method
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 

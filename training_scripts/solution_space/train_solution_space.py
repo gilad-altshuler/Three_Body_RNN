@@ -5,7 +5,7 @@ sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 import torch
 from torch import nn
 
-import tasks.K_Bit_Flipflop_task
+from tasks.K_Bit_Flipflop_task import generate_data
 from Models import *
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -18,7 +18,7 @@ def train_solution_space(run_name, rank=1, data_size=128, hidden_dim=30, input_s
     if not os.path.isdir(run_dir):
         run_dir.mkdir(parents=True)
 
-    input,target = tasks.K_Bit_Flipflop_task.generate_data(data_size, T, input_size)
+    input,target = generate_data(data_size, T, input_size)
 
     lr_rnn = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate',
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
