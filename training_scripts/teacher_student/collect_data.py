@@ -59,9 +59,10 @@ for task,t_rank in tasks:
 
     if task == 'sin_task':
       input_size = output_size = 1
+      Wout_bias = True
     else:
       input_size = output_size = t_rank
-    hidden_dim = 30
+      Wout_bias = False
 
     accs = copy.deepcopy(STATS)
     mse_errs = copy.deepcopy(STATS)
@@ -80,14 +81,14 @@ for task,t_rank in tasks:
 
         # define teachers
         lr_tbrnn = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=t_rank, mode='cont', form='rate', task="FF",
-                            noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
+                            noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
         if not os.path.exists(path := RUN_DIR / f"{task}/{run:03}/tbrnn_teacher.pth"):
             print(f"❌ Missing: {path}")
             exit(1)
         lr_tbrnn.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
 
         lr_rnn = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=t_rank, mode='cont', form='rate', task="FF",
-                            noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
+                            noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
         if not os.path.exists(path := RUN_DIR / f"{task}/{run:03}/rnn_teacher.pth"):
             print(f"❌ Missing: {path}")
             exit(1)
@@ -102,11 +103,11 @@ for task,t_rank in tasks:
             # define students
                 lr_rnn_student = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=s_rank,
                                             mode='cont', form='rate',output_nonlinearity=teacher.output_nonlinearity,task="FF",noise_std=0.0,
-                                            tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
+                                            tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
 
                 lr_tbrnn_student = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=s_rank,
                                             mode='cont', form='rate',output_nonlinearity=teacher.output_nonlinearity,task="FF",noise_std=0.0,
-                                            tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
+                                            tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
 
                 students = {"rnn":lr_rnn_student,"tbrnn":lr_tbrnn_student}
 
