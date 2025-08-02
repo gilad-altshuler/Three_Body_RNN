@@ -8,8 +8,6 @@ import utils
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 MODELS = ["rnn", "tbrnn", "hornn", "gru"]
 
 def get_model_str(model_class):
@@ -46,6 +44,7 @@ def train(model,input,target,epochs,optimizer,criterion,
     """
     B,T,_ = input.shape
     N = model.hidden_dim
+    DEVICE = next(model.parameters()).device
     if hidden is None:
         hidden = torch.zeros(B,N).to(DEVICE)
     dataset = TensorDataset(input,target,hidden)
@@ -129,8 +128,8 @@ class TBRNN(nn.Module):
 
         self.hidden_dim=hidden_dim
 
-        #self.w_hh = nn.Parameter(nn.init.xavier_uniform_(torch.empty((hidden_dim,hidden_dim),requires_grad=True,device=DEVICE)))
-        self.w_hh = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim,hidden_dim).to(DEVICE))
+        #self.w_hh = nn.Parameter(nn.init.xavier_uniform_(torch.empty((hidden_dim,hidden_dim))))
+        self.w_hh = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh, std=.1 / (hidden_dim))
 
         if w_in is not None:
@@ -173,6 +172,7 @@ class TBRNN(nn.Module):
         # u (batch_size, seq_length, input_size)
         # hidden (batch_size, hidden_dim)
         # r_out (batch_size, time_steps, hidden_size)
+        DEVICE = next(self.parameters()).device
         b_size, seq_length = u.size(0), u.size(1)
         hid = self.hidden_dim
         noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
@@ -221,7 +221,7 @@ class TBRNN(nn.Module):
 
     def clone(self):
         new_net = TBRNN(self.input_size, self.output_size, self.hidden_dim, self.nonlinearity,self.output_nonlinearity,
-                         self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(DEVICE)
+                         self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(next(self.parameters()).device)
         new_net.w_in = copy.deepcopy(self.w_in)
         new_net.w_hh = nn.Parameter(self.w_hh.detach().clone())
         new_net.w_out = copy.deepcopy(self.w_out)
@@ -236,8 +236,8 @@ class Full_Rank_RNN(nn.Module):
 
         self.hidden_dim=hidden_dim
 
-        #self.w_hh = nn.Parameter(nn.init.xavier_uniform_(torch.empty((hidden_dim,hidden_dim),requires_grad=True,device=DEVICE)))
-        self.w_hh = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim).to(DEVICE))
+        #self.w_hh = nn.Parameter(nn.init.xavier_uniform_(torch.empty((hidden_dim,hidden_dim))))
+        self.w_hh = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh, std=.1 / (hidden_dim**0.5))
         
         if w_in is not None:
@@ -279,6 +279,7 @@ class Full_Rank_RNN(nn.Module):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
         # trajectories (batch_size, time_steps, hidden_size)
+        DEVICE = next(self.parameters()).device
         b_size, seq_length = u.size(0), u.size(1)
         hid = self.hidden_dim
         noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
@@ -325,7 +326,7 @@ class Full_Rank_RNN(nn.Module):
 
     def clone(self):
         new_net = Full_Rank_RNN(self.input_size, self.output_size, self.hidden_dim, self.nonlinearity, self.output_nonlinearity,
-                                 self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(DEVICE)
+                                 self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(next(self.parameters()).device)
         new_net.w_in = copy.deepcopy(self.w_in)
         new_net.w_hh = nn.Parameter(self.w_hh.detach().clone())
         new_net.w_out = copy.deepcopy(self.w_out)
@@ -384,6 +385,7 @@ class Low_Rank_TBRNN(nn.Module):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
         # trajectories (batch_size, time_steps, hidden_size)
+        DEVICE = next(self.parameters()).device
         b_size, seq_length = u.size(0), u.size(1)
         hid = self.hidden_dim
         noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
@@ -443,7 +445,7 @@ class Low_Rank_TBRNN(nn.Module):
     
     def clone(self):
         new_net = Low_Rank_TBRNN(self.input_size, self.output_size, self.hidden_dim, self.rank, self.nonlinearity, self.output_nonlinearity,
-                                 self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(DEVICE)
+                                 self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(next(self.parameters()).device)
         new_net.L = nn.Parameter(self.L.detach().clone())
         new_net.M = nn.Parameter(self.M.detach().clone())
         new_net.N = nn.Parameter(self.N.detach().clone())
@@ -525,6 +527,7 @@ class Low_Rank_RNN(nn.Module):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
         # trajectories (batch_size, time_steps, hidden_size)
+        DEVICE = next(self.parameters()).device
         b_size, seq_length = u.size(0), u.size(1)
         hid = self.hidden_dim
         noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
@@ -579,7 +582,7 @@ class Low_Rank_RNN(nn.Module):
 
     def clone(self):
         new_net = Low_Rank_RNN(self.input_size, self.output_size, self.hidden_dim, self.rank, self.nonlinearity, self.output_nonlinearity,
-                                 self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(DEVICE)
+                                 self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(next(self.parameters()).device)
         new_net.M = nn.Parameter(self.M.detach().clone())
         new_net.N = nn.Parameter(self.N.detach().clone())
         new_net.w_in = copy.deepcopy(self.w_in)
@@ -591,7 +594,7 @@ class Low_Rank_RNN(nn.Module):
             structure = (self.M @ self.N.t()).cpu().detach().numpy()
             m, s, n = np.linalg.svd(structure, full_matrices=False)
             m, s, n = m[:, :self.rank], s[:self.rank], n[:self.rank, :]
-            return torch.from_numpy(m * np.sqrt(s)).to(DEVICE),torch.from_numpy(n.transpose() * np.sqrt(s)).to(DEVICE)
+            return torch.from_numpy(m * np.sqrt(s)).to(next(self.parameters()).device),torch.from_numpy(n.transpose() * np.sqrt(s)).to(next(self.parameters()).device)
 
     def normalize_tensor_(self):
         m, n = self.normalize_tensor()
@@ -654,6 +657,7 @@ class Low_Rank_GRU(nn.Module):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
         # trajectories (batch_size, time_steps, hidden_size)
+        DEVICE = next(self.parameters()).device
         b_size, seq_length = u.size(0), u.size(1)
         hid = self.hidden_dim
         noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
@@ -697,6 +701,7 @@ class Low_Rank_GRU(nn.Module):
         return output, x, trajectories
 
     def clone(self):
+        DEVICE = next(self.parameters()).device
         new_net = Low_Rank_GRU(self.input_size,self.output_size,self.hidden_dim,self.rank,self.nonlinearity,
                                self.mode,self.noise_std,self.tau,self.Win_bias, self.Wout_bias).to(DEVICE)
 
@@ -728,10 +733,10 @@ class HORNN(nn.Module):
         self.task=task
         self.adv = adv
 
-        self.w_hh_rnn = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim).to(DEVICE))
+        self.w_hh_rnn = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh_rnn, std=.1 / (hidden_dim**0.5))
 
-        self.w_hh_tbrnn = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim,hidden_dim).to(DEVICE))
+        self.w_hh_tbrnn = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh_tbrnn, std=.1 / (hidden_dim))
 
         if w_in is not None:
@@ -772,12 +777,13 @@ class HORNN(nn.Module):
         self.Win_bias = Win_bias
         self.Wout_bias = Wout_bias
         self.hard_orth = hard_orth
-        self.alpha = nn.Parameter(torch.tensor(0.0,requires_grad=True,device=DEVICE))
+        self.alpha = nn.Parameter(torch.tensor(0.0))
 
     def forward(self, u, x0):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
         # trajectories (batch_size, time_steps, hidden_size)
+        DEVICE = next(self.parameters()).device
         b_size, seq_length = u.size(0), u.size(1)
         hid = self.hidden_dim
         noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
@@ -889,12 +895,13 @@ class Low_Rank_HORNN(nn.Module):
         self.Win_bias = Win_bias
         self.Wout_bias = Wout_bias
         self.hard_orth = hard_orth
-        self.alpha = nn.Parameter(torch.tensor(0.0,requires_grad=True,device=DEVICE))
+        self.alpha = nn.Parameter(torch.tensor(0.0))
 
     def forward(self, u, x0):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
         # trajectories (batch_size, time_steps, hidden_size)
+        DEVICE = next(self.parameters()).device
         b_size, seq_length = u.size(0), u.size(1)
         hid = self.hidden_dim
         noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
@@ -962,6 +969,7 @@ class Low_Rank_HORNN(nn.Module):
         return W_rnn / self.hidden_dim, W_tbrnn / (self.hidden_dim ** 2)
 
     def clone(self):
+        DEVICE = next(self.parameters()).device
         new_net = Low_Rank_HORNN(self.input_size, self.output_size, self.hidden_dim, self.rank_rnn, self.rank_tbrnn, self.nonlinearity, self.output_nonlinearity,
                                  self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias, adv=self.adv).to(DEVICE)
         new_net.L_tbrnn = nn.Parameter(self.L_tbrnn.detach().clone())

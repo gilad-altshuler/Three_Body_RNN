@@ -14,13 +14,29 @@ from tasks.K_Bit_Flipflop_task import generate_data
 ROOT = Path(__file__).absolute().parent.parent.parent
 RUN_DIR = ROOT.parent / "runs" / "teacher_student"
 DATA_DIR = ROOT / "data" / "teacher_student"
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cpu"
+
+if not os.path.isdir(RUN_DIR):
+    print(f"Run directory {RUN_DIR} does not exist. Please run the training script first.")
+    exit(1)
 
 hidden_dim = 30
 runs = 30
 T = 100
 data_size = 500
 s_ranks = 6
+
+STATS = {
+    "rnn": {
+        "rnn": [[None for _ in range(runs)] for _ in range(s_ranks)],
+        "tbrnn": [[None for _ in range(runs)] for _ in range(s_ranks)]
+    },
+    "tbrnn": {
+        "rnn": [[None for _ in range(runs)] for _ in range(s_ranks)],
+        "tbrnn": [[None for _ in range(runs)] for _ in range(s_ranks)]
+    }
+}
 
 tasks = [("K_Bit_Flipflop_task/1",1),
          ("K_Bit_Flipflop_task/2",2),
@@ -30,6 +46,13 @@ tasks = [("K_Bit_Flipflop_task/1",1),
 task_stats = []
 
 for task,t_rank in tasks:
+    ###################
+    if task == 'K_Bit_Flipflop_task/3':
+       continue
+    ###################
+    if not os.path.isdir(RUN_DIR / task):
+        print(f"Run directory {RUN_DIR / task} does not exist.")
+        continue
 
     print(f"Task: {task}")
     stats = {}
@@ -40,26 +63,17 @@ for task,t_rank in tasks:
       input_size = output_size = t_rank
     hidden_dim = 30
 
-    stats = {
-        "rnn": {
-            "rnn": [[None for _ in range(runs)] for _ in range(s_ranks)],
-            "tbrnn": [[None for _ in range(runs)] for _ in range(s_ranks)]
-        },
-        "tbrnn": {
-            "rnn": [[None for _ in range(runs)] for _ in range(s_ranks)],
-            "tbrnn": [[None for _ in range(runs)] for _ in range(s_ranks)]
-        }
-    }
-
-    accs = copy.deepcopy(stats)
-    mse_errs = copy.deepcopy(stats)
-    r2s = copy.deepcopy(stats)
-    t_s_errs = copy.deepcopy(stats)
+    accs = copy.deepcopy(STATS)
+    mse_errs = copy.deepcopy(STATS)
+    r2s = copy.deepcopy(STATS)
+    t_s_errs = copy.deepcopy(STATS)
 
     generate_data = getattr(importlib.import_module("tasks."+task.split('/')[0]), 'generate_data')
     evaluate = getattr(importlib.import_module("tasks."+task.split('/')[0]), 'evaluate')
 
-    input, target = generate_data(data_size,T,input_size)
+    input, target = generate_data(data_size,T,input_size,DEVICE=DEVICE)
+    input = input.to(DEVICE)
+    target = target.to(DEVICE)
 
     for run in range(1,runs+1):
         i = run-1
@@ -105,13 +119,12 @@ for task,t_rank in tasks:
 
                     student.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
 
-                    stats[t_name][s_name][s_rank-1][i] = evaluate(student,input,target,teacher_traj=teacher_hidden,rates=False,r2_mode='per_batch',r2_all=True)
                     (
                     accs[t_name][s_name][s_rank-1][i],
                     mse_errs[t_name][s_name][s_rank-1][i],
                     r2s[t_name][s_name][s_rank-1][i],
                     t_s_errs[t_name][s_name][s_rank-1][i]
-                    ) = stats[t_name][s_name][s_rank-1][i]
+                    ) = evaluate(student,input,target,teacher_traj=teacher_hidden,rates=False,r2_mode='per_batch',r2_all=True)
 
     for t_name in ['rnn','tbrnn']:
       for s_name in ['rnn','tbrnn']:

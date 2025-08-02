@@ -17,8 +17,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 def ode_solver(y0, input, dt=0.01, T=100, Kd=1, n=1.5, alpha=1.2, beta=30):
     from scipy.integrate import solve_ivp
 
@@ -85,7 +83,7 @@ def generate_batched_init_states(B, P, N, alpha, beta):
 
     return torch.stack(all_states)  # Shape: (P * B, N)
 
-def generate_data(data_size, T, N ,dt = 0.1, Kd=1, n=1.5, alpha=0.4, beta=10, inducers=0):
+def generate_data(data_size, T, N ,dt = 0.1, Kd=1, n=1.5, alpha=0.4, beta=10, inducers=0, DEVICE="cpu"):
     """
     Generate synthetic data for the MultiFate task.
     :param data_size: Number of samples to generate

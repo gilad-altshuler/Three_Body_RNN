@@ -2,8 +2,6 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 def plot(input,target,prediction=None,idx=0):
     """
     Draw memory charts for the K-Bit Flipflop task.
@@ -42,7 +40,7 @@ def plot(input,target,prediction=None,idx=0):
     plt.close()
 
 
-def generate_data(data_size,T,K):
+def generate_data(data_size,T,K,DEVICE="cpu"):
     """
     Generate synthetic data for the K-Bit Flipflop task.
     :param data_size: Number of samples to generate

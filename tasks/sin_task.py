@@ -2,31 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-# def generate_sin_data(data_size,T):
-#     # random static vector x ~ U(0,1) #
-#     input = np.ones([data_size, T],dtype="float32")*np.random.uniform(0,0.6,data_size)[:,None]
-
-#     ####### defining the training data #######
-
-#     # 501 time steps - T=500, dt=0.01 #
-#     time_steps = np.linspace(0,5,T)
-
-#     # defining the frequency #
-#     omega = (input+0.01)
-#     # defining the sin wave #
-#     y = np.sin(2*np.pi*omega*time_steps)
-#     ######## convert data into Tensors ########
-#     input.resize((data_size,T,1)) # batch_size,time_steps,input_size
-#     x_tensor = torch.tensor(input).float().to(DEVICE)
-
-#     y.resize((data_size,T,1)) # time_steps,output_size
-#     y_tensor = torch.Tensor(y).to(DEVICE)
-
-#     return x_tensor , y_tensor
-
-def generate_data(data_size=128,T=100,input_size=1):
+def generate_data(data_size=128,T=100,input_size=1, DEVICE="cpu"):
 
     eps = 0.04
     # random static vector x ~ U(0,1) #

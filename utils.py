@@ -7,9 +7,6 @@ colors = np.array([[0.1254902, 0.29019608, 0.52941176],
                    [0.80784314, 0.36078431, 0.],
                    [0.30588235, 0.60392157, 0.02352941],
                    [0.64313725, 0., 0.]])
-figsize = (8, 3)
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def print_rand_neurons(model, n, hidden_dim, T, inputs):
@@ -162,6 +159,7 @@ def calc_jacobian(model, fixed_point, const_signal_tensor, model_type, model_mod
     :return: Jacobian at the given fixed point
     """
     from torch.autograd import Variable
+    DEVICE = next(model.parameters()).device
 
     fixed_point = Variable(fixed_point.unsqueeze(dim=1)).to(DEVICE)
     fixed_point.requires_grad = True

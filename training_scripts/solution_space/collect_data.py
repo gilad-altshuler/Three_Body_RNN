@@ -7,7 +7,6 @@ sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
 from utils import CKA
 from Models import Low_Rank_RNN, Low_Rank_TBRNN, Low_Rank_GRU
-from tasks.K_Bit_Flipflop_task import generate_data
 
 ROOT = Path(__file__).absolute().parent.parent.parent
 SAVE_RUN = 1

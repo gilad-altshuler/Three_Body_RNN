@@ -18,7 +18,7 @@ def train_solution_space(run_name, rank=1, data_size=128, hidden_dim=30, input_s
     if not os.path.isdir(run_dir):
         run_dir.mkdir(parents=True)
 
-    input,target = generate_data(data_size, T, input_size)
+    input,target = generate_data(data_size, T, input_size, DEVICE=DEVICE)
 
     lr_rnn = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate',
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)

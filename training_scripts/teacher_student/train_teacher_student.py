@@ -22,8 +22,8 @@ def train_teacher_student(run_name, t_rank, ranks=[1,6], data_size=128, hidden_d
         run_dir.mkdir(parents=True)
 
     generate_data = getattr(importlib.import_module("tasks."+run_name.split('/')[0]), 'generate_data')
-    input,target = generate_data(data_size, T, input_size)
-    
+    input,target = generate_data(data_size, T, input_size, DEVICE=DEVICE)
+
     criterion = nn.MSELoss().to(DEVICE)
     end_factor = lr[1] / lr[0]
     eps = 0.005

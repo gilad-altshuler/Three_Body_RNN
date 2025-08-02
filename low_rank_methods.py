@@ -3,8 +3,6 @@ from torch import nn
 from tasks.K_Bit_Flipflop_task import accuracy
 from Models import *
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 
 def TCA_method(model,input,target,start_rank=1,end_rank=6,W0=None):
     """
@@ -19,7 +17,8 @@ def TCA_method(model,input,target,start_rank=1,end_rank=6,W0=None):
     """
     import tensorly as tl
     from tensorly.decomposition import parafac
-    
+    DEVICE = next(model.parameters()).device
+
     accs = []
     newModel = model.clone()
     for rank in range(start_rank,end_rank+1):
@@ -49,6 +48,7 @@ def TT_method(model,input,target,start_rank=1,end_rank=6,W0=None):
     """
     import tensorly as tl
     from tensorly.decomposition import TensorTrain
+    DEVICE = next(model.parameters()).device
 
     accs = []
     newModel = model.clone()
@@ -81,6 +81,8 @@ def sliceTCA_method(model,input,target,start_rank=1,end_rank=6,W0=None):
     :return: accuracy array for each rank from start_rank to end_rank.
     """
     import slicetca
+    DEVICE = next(model.parameters()).device
+
     accs = []
     newModel = model.clone()
 
@@ -120,6 +122,8 @@ def LINT_method(teacher,student_class,input,target,start_rank=1,end_rank=6,epoch
     """
 
     # MSE loss and Adam optimizer with a learning rate
+    DEVICE = next(teacher.parameters()).device
+
     criterion = nn.MSELoss().to(DEVICE)
     teacher_hidden = teacher(input, None)[2].detach().clone()  # get teacher hidden state
     if rates:
