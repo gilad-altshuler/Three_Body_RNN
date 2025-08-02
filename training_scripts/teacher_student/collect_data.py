@@ -72,8 +72,6 @@ for task,t_rank in tasks:
     evaluate = getattr(importlib.import_module("tasks."+task.split('/')[0]), 'evaluate')
 
     input, target = generate_data(data_size,T,input_size,DEVICE=DEVICE)
-    input = input.to(DEVICE)
-    target = target.to(DEVICE)
 
     for run in range(1,runs+1):
         i = run-1

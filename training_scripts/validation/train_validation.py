@@ -25,7 +25,7 @@ def run_methods(Model_class,lr_class,run_name,ranks=[1,6],data_size=128,
     criterion = nn.MSELoss().to(DEVICE)
 
     generate_data = getattr("tasks."+importlib.import_module(run_name.split('/')[0]), 'generate_data')
-    input, target = generate_data(data_size,T,input_size,DEVICE)
+    input, target = generate_data(data_size,T,input_size,DEVICE=DEVICE)
 
     while True:
         # define teacher
