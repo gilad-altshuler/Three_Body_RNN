@@ -23,7 +23,11 @@ for i in $(seq $START $((START + N - 1))); do
 
   CUDA_VISIBLE_DEVICES=$GPU_ID nohup python \
     "$ROOT/training_scripts/teacher_student/train_teacher_student.py" \
-    --run_name "${TASK_NAME}/$(printf "%03d" $i)" --t_rank 2 --ranks "${RANKS[@]}" --rates --w_out_bias \
+    --run_name "${TASK_NAME}/$(printf "%03d" $i)" \
+    --t_rank 2 \
+    --ranks "${RANKS[@]}" \
+    --rates \
+    --w_out_bias \
     > "$ROOT/outputs/teacher_student/sin_task/output_$i.log" 2>&1 &
 done
 
