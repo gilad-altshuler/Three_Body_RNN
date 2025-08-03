@@ -1,4 +1,4 @@
-# Beyond_Linear_Summation-Three_Body_RNNs
+# Beyond Linear Summation - Three Body RNNs
 
 ## About
 Code repository accompaning the paper "Beyond linear summation: Three-Body RNNs for modeling complex neural and biological systems"
