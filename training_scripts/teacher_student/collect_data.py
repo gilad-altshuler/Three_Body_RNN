@@ -14,8 +14,7 @@ from tasks.K_Bit_Flipflop_task import generate_data
 ROOT = Path(__file__).absolute().parent.parent.parent
 RUN_DIR = ROOT.parent / "runs" / "teacher_student"
 DATA_DIR = ROOT / "data" / "teacher_student"
-# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DEVICE = "cpu"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if not os.path.isdir(RUN_DIR):
     print(f"Run directory {RUN_DIR} does not exist. Please run the training script first.")
@@ -43,13 +42,10 @@ tasks = [("K_Bit_Flipflop_task/1",1),
          ("K_Bit_Flipflop_task/3",3),
          ("sin_task",2)]
 
-task_stats = []
+task_stats = {}
 
 for task,t_rank in tasks:
-    ###################
-    if task == 'K_Bit_Flipflop_task/3':
-       continue
-    ###################
+
     if not os.path.isdir(RUN_DIR / task):
         print(f"Run directory {RUN_DIR / task} does not exist.")
         continue
@@ -132,12 +128,12 @@ for task,t_rank in tasks:
         r2s[t_name][s_name] = np.array(r2s[t_name][s_name])
         t_s_errs[t_name][s_name] = np.array(t_s_errs[t_name][s_name])
 
-    task_stats.append({task: {
+    task_stats[task] = {
         "accs": accs,
         "mse_errs": mse_errs,
         "r2s": r2s,
         "t_s_errs": t_s_errs
-    }})
+    }
 
 
 with open(DATA_DIR / "task_stats.pkl", "wb") as f:
