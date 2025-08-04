@@ -101,8 +101,8 @@ def generate_data(data_size, T, N ,dt = 0.1, Kd=1, n=1.5, alpha=0.4, beta=10, in
 
     params = (dt, T, Kd, n, alpha, beta)
     random_data_size = 4000
-    P=5
-    B=random_data_size//P
+    P = 5
+    B = random_data_size // P
     init_state = generate_batched_init_states(B, P, N, alpha, beta)
 
 
