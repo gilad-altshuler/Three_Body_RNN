@@ -65,7 +65,9 @@ def evaluate(model, input, target, teacher_traj=None, rates=False, r2_mode='per_
         acc = accuracy(prediction,target)
         error = torch.nn.functional.mse_loss(prediction, target,reduction=reduction)
         if reduction == 'none':
-          error = error.mean(axis=(1,2))
+            error = error.mean(axis=(1,2)).detach().cpu().numpy()
+        else:
+            error = error.item()
         if teacher_traj is not None:
             if r2_mode == 'per_batch':
                 r2 = [r2_score(teacher_traj[i].detach().cpu().numpy(), trajectory[i].detach().cpu().numpy()) for i in range(len(teacher_traj))]
