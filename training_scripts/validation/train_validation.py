@@ -24,13 +24,14 @@ def run_methods(Model_class,lr_class,run_name,ranks=[1,6],data_size=128,
 
     criterion = nn.MSELoss().to(DEVICE)
 
-    generate_data = getattr("tasks."+importlib.import_module(run_name.split('/')[0]), 'generate_data')
+    task = importlib.import_module(run_name.split('/')[0])
+    generate_data = getattr(f'tasks.{task}', 'generate_data')
     input, target = generate_data(data_size,T,input_size,DEVICE=DEVICE)
 
     while True:
         # define teacher
         teacher = Model_class(input_size, output_size, hidden_dim, mode='disc',
-                        form='voltage',task="FF", Win_bias=True, Wout_bias=True).to(DEVICE)
+                        form='voltage',task=task, Win_bias=True, Wout_bias=True).to(DEVICE)
 
         optimizer = torch.optim.Adam(teacher.parameters(), lr=lr[0])
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=end_factor,total_iters=epochs)
@@ -61,7 +62,8 @@ def run_methods(Model_class,lr_class,run_name,ranks=[1,6],data_size=128,
     print("sliceTCA accuracies:", slice_tca)
     # LINT method
     lint = LINT_method(teacher,lr_class,input,target,start_rank=ranks[0],end_rank=ranks[1],
-                       epochs=lint_epochs,batch_size = data_size,lr = lint_lr,to_save=run_dir,return_accs=True,rates=False)
+                       epochs=lint_epochs,batch_size = data_size,lr = lint_lr,to_save=run_dir,
+                       return_accs=True,rates=False)
     print("LINT accuracies:", lint)
     # save results
     np.save(run_dir / "tca.npy", tca)

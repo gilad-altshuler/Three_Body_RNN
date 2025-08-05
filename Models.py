@@ -1,3 +1,4 @@
+import importlib
 import copy
 import numpy as np
 import torch
@@ -98,16 +99,8 @@ def train(model,input,target,epochs,optimizer,criterion,
                 last_epoch_best_loss = best_loss
 
             if plot:
-                if model.task =="FF":
-                    K_Bit_Flipflop_task.plot(input.cpu(),target.cpu(),prediction.cpu(),idx=0)
-                elif model.task == "Sin":
-                    sin_task.plot(input.cpu(),target.cpu(),prediction.cpu(),idx=0)
-                elif model.task == "MultiFate":
-                    MultiFate_task.plot(input.cpu(),target.cpu(),prediction.cpu(),idx=0)
-                elif model.task == "Mante":
-                    plt.plot(target[0,:,:3].detach().cpu().numpy(),linestyle = 'dashed')
-                    plt.plot(prediction[0,:,:3].detach().cpu().numpy())
-                    plt.show()
+                plot_func = getattr(importlib.import_module(f"tasks.{model.task}"), 'plot')
+                plot_func(input.cpu(),target.cpu(),prediction.cpu(),idx=0)
 
     if keep_best:
         model.load_state_dict(model.best_model)
@@ -122,7 +115,7 @@ def train(model,input,target,epochs,optimizer,criterion,
 
 class TBRNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, nonlinearity=torch.tanh, output_nonlinearity=torch.tanh, 
-                 task="FF", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, 
+                 task="", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, 
                  w_out = None, w_in = None, hard_orth=False):
         super(TBRNN, self).__init__()
 
@@ -227,12 +220,12 @@ class TBRNN(nn.Module):
         new_net.w_out = copy.deepcopy(self.w_out)
         return new_net
 
-class Full_Rank_RNN(nn.Module):
+class RNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, nonlinearity=torch.tanh, output_nonlinearity=torch.tanh, 
-                 task="FF", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, 
+                 task="", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, 
                  w_out = None, w_in = None,
                  hard_orth=False):
-        super(Full_Rank_RNN, self).__init__()
+        super(RNN, self).__init__()
 
         self.hidden_dim=hidden_dim
 
@@ -325,7 +318,7 @@ class Full_Rank_RNN(nn.Module):
         return output, x, trajectories
 
     def clone(self):
-        new_net = Full_Rank_RNN(self.input_size, self.output_size, self.hidden_dim, self.nonlinearity, self.output_nonlinearity,
+        new_net = RNN(self.input_size, self.output_size, self.hidden_dim, self.nonlinearity, self.output_nonlinearity,
                                  self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(next(self.parameters()).device)
         new_net.w_in = copy.deepcopy(self.w_in)
         new_net.w_hh = nn.Parameter(self.w_hh.detach().clone())
@@ -335,7 +328,7 @@ class Full_Rank_RNN(nn.Module):
 
 class Low_Rank_TBRNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, rank=1, nonlinearity=torch.tanh, 
-                 output_nonlinearity=torch.tanh, task="FF", mode="cont", form="rate",
+                 output_nonlinearity=torch.tanh, task="", mode="cont", form="rate",
                  noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out = None, w_in = None,
                  hard_orth=False):
         super(Low_Rank_TBRNN, self).__init__()
@@ -478,7 +471,7 @@ class Low_Rank_TBRNN(nn.Module):
             return (self.L * coef / norml)[:, indices], (self.N * coef / normn)[:, indices], (self.M * coef / normm)[:, indices]
 class Low_Rank_RNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, rank=1, nonlinearity=torch.tanh, 
-                 output_nonlinearity=torch.tanh, task="FF", mode="cont", form="rate",
+                 output_nonlinearity=torch.tanh, task="", mode="cont", form="rate",
                  noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out = None, w_in = None,
                  hard_orth=False):
         super(Low_Rank_RNN, self).__init__()
@@ -605,7 +598,7 @@ class Low_Rank_RNN(nn.Module):
 
 class Low_Rank_GRU(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, rank=1, nonlinearity=torch.tanh, output_nonlinearity=torch.tanh,
-                 mode="cont", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out=None,
+                 task="", mode="cont", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out=None,
                  hard_orth=False):
         super(Low_Rank_GRU, self).__init__()
 
@@ -643,6 +636,8 @@ class Low_Rank_GRU(nn.Module):
 
         if mode not in ['cont', 'disc']:
             raise Exception("Error: Mode does not exists.")
+        
+        self.task = task
         self.mode = mode
         self.input_size = input_size
         self.output_size = output_size
@@ -724,7 +719,7 @@ class Low_Rank_GRU(nn.Module):
 
 class HORNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, nonlinearity=torch.tanh, 
-                 output_nonlinearity=torch.tanh, task="FF", mode="cont", form="rate",
+                 output_nonlinearity=torch.tanh, task="", mode="cont", form="rate",
                  noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out = None, w_in = None,
                  adv=False,hard_orth=False):
         super(HORNN, self).__init__()
@@ -838,7 +833,7 @@ class HORNN(nn.Module):
 
 class Low_Rank_HORNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, rank_rnn=1, rank_tbrnn=1, nonlinearity=torch.tanh, 
-                 output_nonlinearity=torch.tanh, task="FF", mode="cont", form="rate",
+                 output_nonlinearity=torch.tanh, task="", mode="cont", form="rate",
                  noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out = None, w_in = None,
                  adv=False,hard_orth=False):
         super(Low_Rank_HORNN, self).__init__()

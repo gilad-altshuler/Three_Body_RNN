@@ -20,13 +20,13 @@ def train_solution_space(run_name, rank=1, data_size=128, hidden_dim=30, input_s
 
     input,target = generate_data(data_size, T, input_size, DEVICE=DEVICE)
 
-    lr_rnn = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate',
+    lr_rnn = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate', task="K_Bit_Flipflop_task",
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
-    lr_tbrnn = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate',
+    lr_tbrnn = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate', task="K_Bit_Flipflop_task",
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
-    lr_tbrnn_same = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate',
+    lr_tbrnn_same = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate', task="K_Bit_Flipflop_task",
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
-    lr_gru = Low_Rank_GRU(input_size, output_size, hidden_dim, rank=rank, mode='cont',
+    lr_gru = Low_Rank_GRU(input_size, output_size, hidden_dim, rank=rank, mode='cont', task="K_Bit_Flipflop_task",
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
     # MSE loss and Adam optimizer with a learning rate
     criterion = nn.MSELoss().to(DEVICE)

@@ -21,7 +21,8 @@ def train_teacher_student(run_name, t_rank, ranks=[1,6], data_size=128, hidden_d
     if not os.path.isdir(run_dir):
         run_dir.mkdir(parents=True)
 
-    generate_data = getattr(importlib.import_module("tasks."+run_name.split('/')[0]), 'generate_data')
+    task = run_name.split('/')[0]
+    generate_data = getattr(importlib.import_module(f'tasks.{task}'), 'generate_data')
     input,target = generate_data(data_size, T, input_size, DEVICE=DEVICE)
 
     criterion = nn.MSELoss().to(DEVICE)
@@ -39,7 +40,7 @@ def train_teacher_student(run_name, t_rank, ranks=[1,6], data_size=128, hidden_d
         print(f"Training {name} teacher...")
         # training rnn
         while True:
-            lr_model = model(input_size, output_size, hidden_dim, rank=t_rank, mode='cont', form='rate', task="Sin",
+            lr_model = model(input_size, output_size, hidden_dim, rank=t_rank, mode='cont', form='rate', task=task,
                               noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=w_out_bias).to(DEVICE)
             
             if (run_dir / f"{name}_teacher.pth").exists():

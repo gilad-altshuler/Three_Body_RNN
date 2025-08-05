@@ -65,8 +65,9 @@ for task,t_rank in tasks:
     r2s = copy.deepcopy(STATS)
     t_s_errs = copy.deepcopy(STATS)
 
-    generate_data = getattr(importlib.import_module("tasks."+task.split('/')[0]), 'generate_data')
-    evaluate = getattr(importlib.import_module("tasks."+task.split('/')[0]), 'evaluate')
+    task_name = task.split('/')[0]
+    generate_data = getattr(importlib.import_module(f"tasks.{task_name}"), 'generate_data')
+    evaluate = getattr(importlib.import_module(f"tasks.{task_name}"), 'evaluate')
 
     input, target = generate_data(data_size,T,input_size,DEVICE=DEVICE)
 
@@ -76,14 +77,14 @@ for task,t_rank in tasks:
         
 
         # define teachers
-        lr_tbrnn = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=t_rank, mode='cont', form='rate', task="FF",
+        lr_tbrnn = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=t_rank, mode='cont', form='rate', task=task_name,
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
         if not os.path.exists(path := RUN_DIR / f"{task}/{run:03}/tbrnn_teacher.pth"):
             print(f"❌ Missing: {path}")
             exit(1)
         lr_tbrnn.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
 
-        lr_rnn = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=t_rank, mode='cont', form='rate', task="FF",
+        lr_rnn = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=t_rank, mode='cont', form='rate', task=task_name,
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
         if not os.path.exists(path := RUN_DIR / f"{task}/{run:03}/rnn_teacher.pth"):
             print(f"❌ Missing: {path}")
@@ -98,12 +99,12 @@ for task,t_rank in tasks:
             for s_rank in range(1,s_ranks+1):
             # define students
                 lr_rnn_student = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=s_rank,
-                                            mode='cont', form='rate',output_nonlinearity=teacher.output_nonlinearity,task="FF",noise_std=0.0,
-                                            tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
+                                              mode='cont', form='rate',output_nonlinearity=teacher.output_nonlinearity,
+                                              task=task_name,noise_std=0.0,tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
 
                 lr_tbrnn_student = Low_Rank_TBRNN(input_size, output_size, hidden_dim, rank=s_rank,
-                                            mode='cont', form='rate',output_nonlinearity=teacher.output_nonlinearity,task="FF",noise_std=0.0,
-                                            tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
+                                                  mode='cont', form='rate',output_nonlinearity=teacher.output_nonlinearity,
+                                                  task=task_name,noise_std=0.0,tau=0.2, Win_bias=False, Wout_bias=Wout_bias).to(DEVICE)
 
                 students = {"rnn":lr_rnn_student,"tbrnn":lr_tbrnn_student}
 
