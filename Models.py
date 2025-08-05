@@ -598,7 +598,7 @@ class Low_Rank_RNN(nn.Module):
 
 class Low_Rank_GRU(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, rank=1, nonlinearity=torch.tanh, output_nonlinearity=torch.tanh,
-                 task="", mode="cont", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out=None,
+                 task="", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out=None,
                  hard_orth=False):
         super(Low_Rank_GRU, self).__init__()
 
