@@ -14,7 +14,7 @@ pre-synaptic summation (left) while biophysics is more complex and input couplin
 present (right). 
 
 
-## Regenerate paper figures
+## Reproduce paper figures
 
 |Figure / Table         | Reproduce |
 |----------------------|------|
