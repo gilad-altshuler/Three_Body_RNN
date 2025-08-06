@@ -17,24 +17,13 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
 
     # load multifate data 
     params = (dt, Kd, n, alpha, beta, inducers) = (0.2,1,1.5,3.6,90.0,0)
-    x, input = generate_data(data_size, T, N, *params)
-
-    #choose only fixed points with 15 high expression proteins
-    chosen = []
-    x_half = torch.nonzero((x[:,-1,:]>=0.2).sum(dim=-1) == N//2).squeeze()
-
-    chosen.append(x_half[torch.randperm(len(x_half))])
-    chosen = torch.cat(chosen)
-    chosen = chosen[torch.randperm(len(chosen))]
-
-    x_15 = x[chosen[:data_size]]
-    input = input[chosen[:data_size]]
+    input, x_half = generate_data(data_size, T, N, *params, DEVICE=DEVICE)
 
     # set up training parameters
     input_size = output_size = hidden_dim = N
     criterion = torch.nn.MSELoss()
     scheduler = None
-    hidden=x_15[:,0,:]
+    hidden=x_half[:,0,:]
     w_out = torch.nn.Identity()
 
     print("Training student models...")
@@ -52,8 +41,8 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
 
     optimizer = torch.optim.Adam(rnn_student.parameters(), lr=lr)
 
-    _ = train(rnn_student,input[:data_size,1:,:],x_15[:,1:,:],epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,T=T-1,
+    _ = train(rnn_student,input[:data_size,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
+              scheduler=scheduler,mask_train=None,batch_size=data_size,
               hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
 
     # training TBRNN
@@ -63,8 +52,8 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
                           noise_std=0.0, tau=0.2, Win_bias=True, Wout_bias=True, w_out=w_out).to(DEVICE)
 
     optimizer = torch.optim.Adam(tbrnn_student.parameters(), lr=lr)
-    _ = train(tbrnn_student,input[:data_size,1:,:],x_15[:,1:,:],epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,T=T-1,
+    _ = train(tbrnn_student,input[:data_size,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
+              scheduler=scheduler,mask_train=None,batch_size=data_size,
               hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
 
     # training HORNN
@@ -75,8 +64,8 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
 
     optimizer = torch.optim.Adam(hornn_student.parameters(), lr=lr)
 
-    _ = train(hornn_student,input[:data_size,1:,:],x_15[:,1:,:],epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,T=T-1,
+    _ = train(hornn_student,input[:data_size,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
+              scheduler=scheduler,mask_train=None,batch_size=data_size,
               hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
 
     torch.save(rnn_student.state_dict(), run_dir / "RNN_student.pth")

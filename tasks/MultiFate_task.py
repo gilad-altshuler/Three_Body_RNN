@@ -139,17 +139,29 @@ def generate_data(data_size, T, N ,dt = 0.1, Kd=1, n=1.5, alpha=0.4, beta=10, in
     input = (torch.from_numpy(input)/(alpha+beta)).float().to(DEVICE)
 
     fps = (target[:,-1,:]>=0.2).sum(dim=-1).unique()
+    print(fps)
     chosen = []
 
     for fp in fps:
-      a = torch.nonzero((target[:,-1,:]>=0.2).sum(dim=-1) == fp).squeeze()
+      a = torch.nonzero((target[:,-1,:]>=0.2).sum(dim=-1) == fp).view(-1)
       print(f"TFs ON: {fp}, count: {len(a)}")
       chosen.append(a[torch.randperm(len(a))])
 
     chosen = torch.cat(chosen)
     chosen = chosen[torch.randperm(len(chosen))]
 
-    return input[chosen], target[chosen]
+    input, x = input[chosen], target[chosen]
+
+    #choose only fixed points with N/2 high expression proteins
+    chosen = []
+    x_half = torch.nonzero((x[:,-1,:]>=0.2).sum(dim=-1) == N//2).view(-1)
+
+    chosen.append(x_half[torch.randperm(len(x_half))])
+    chosen = torch.cat(chosen)
+    chosen = chosen[torch.randperm(len(chosen))]
+
+
+    return input[chosen[:data_size]], x[chosen[:data_size]]
 
 def plot(input,target,prediction=None,idx=0):
     """

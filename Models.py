@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import TensorDataset, DataLoader
-from tasks import sin_task, K_Bit_Flipflop_task, MultiFate_task
 import utils
 from tqdm import tqdm
 import matplotlib.pyplot as plt
