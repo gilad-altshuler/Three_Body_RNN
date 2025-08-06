@@ -58,7 +58,7 @@ Next, run the notebook:
 *(May be run via **google colab** or **linux terminal**)*
 > Note that notebook can be run independently without the reproduction train - data used already located in data/solution_space directory
 
-### Teacher-Student setup on synthetic neuroscience data
+### Teacher-student setup on synthetic neuroscience data
 To reproduce - run train script with nohup:
 ```
 training_scripts/teacher_student/run_multiple_tasks.sh > ../master_log.txt 2>&1 &
