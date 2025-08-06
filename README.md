@@ -39,21 +39,32 @@ conda activate TBRNN_env
 ### Low-rank TBRNN validation
 To reproduce the low-rank and theory validation data - run train script with nohup:
 ```
-training_scripts/validation/run_multiple.sh > master_log.txt 2>&1 &
+training_scripts/validation/run_multiple.sh > ../master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
 [notebooks/1_Low_rank_TBRNN_validation.ipynb](notebooks/1_Low_rank_TBRNN_validation.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
 > Note that notebook can be run independently without the reproduction train - data used already located in data/validation directory
-> 
+
 ### Expanding solution space
 To reproduce - run train script with nohup:
 ```
-training_scripts/solution_space/run_multiple.sh > master_log.txt 2>&1 &
+training_scripts/solution_space/run_multiple.sh > ../master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
 [notebooks/2_Solution_space.ipynb](notebooks/2_Solution_space.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
-> Note that notebook can be run independently without the reproduction train - data used already located in data/solution_space directory 
+> Note that notebook can be run independently without the reproduction train - data used already located in data/solution_space directory
+
+### Teacher-Student setup on synthetic neuroscience data
+To reproduce - run train script with nohup:
+```
+training_scripts/teacher_student/run_multiple_tasks.sh > ../master_log.txt 2>&1 &
+```
+Next, run the notebook:
+
+[notebooks/3_Teacher_Student.ipynb](notebooks/3_Teacher_Student.ipynb)
+*(May be run via **google colab** or **linux terminal**)*
+> Note that notebook can be run independently without the reproduction train - data used already located in data/teacher_student directory
