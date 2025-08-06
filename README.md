@@ -16,7 +16,7 @@ present (right).
 
 ## Reproduce paper figures
 
-|Figure / Table         | Reproduce |
+|Figure / Table         | Reproduce + Link to instructions |
 |----------------------|------|
 |Fig 1. Motivation: Three-body interactions|Created manually in Biorender.com|
 |Fig 2. Neuroscience tasks and their biological gene expression counterparts|Created manually in Biorender.com|
