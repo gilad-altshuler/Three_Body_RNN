@@ -115,7 +115,7 @@ def train(model,input,target,epochs,optimizer,criterion,
 class TBRNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, nonlinearity=torch.tanh, output_nonlinearity=torch.tanh, 
                  task="", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, 
-                 w_out = None, w_in = None, hard_orth=False):
+                 w_out = None, w_in = None, hard_orth=False, w_hh_mask=None):
         super(TBRNN, self).__init__()
 
         self.hidden_dim=hidden_dim
@@ -123,6 +123,11 @@ class TBRNN(nn.Module):
         #self.w_hh = nn.Parameter(nn.init.xavier_uniform_(torch.empty((hidden_dim,hidden_dim))))
         self.w_hh = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh, std=.1 / (hidden_dim))
+
+        if w_hh_mask is not None:
+            self.w_hh_mask = w_hh_mask
+            self.w_hh.data *= w_hh_mask
+            self.w_hh.register_hook(lambda grad: grad * w_hh_mask)
 
         if w_in is not None:
             self.w_in = w_in
@@ -158,7 +163,6 @@ class TBRNN(nn.Module):
         self.Win_bias = Win_bias
         self.Wout_bias = Wout_bias
         self.hard_orth = hard_orth
-
 
     def forward(self, u, x0):
         # u (batch_size, seq_length, input_size)
@@ -222,8 +226,7 @@ class TBRNN(nn.Module):
 class RNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, nonlinearity=torch.tanh, output_nonlinearity=torch.tanh, 
                  task="", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, 
-                 w_out = None, w_in = None,
-                 hard_orth=False):
+                 w_out = None, w_in = None,hard_orth=False,w_hh_mask=None):
         super(RNN, self).__init__()
 
         self.hidden_dim=hidden_dim
@@ -231,7 +234,12 @@ class RNN(nn.Module):
         #self.w_hh = nn.Parameter(nn.init.xavier_uniform_(torch.empty((hidden_dim,hidden_dim))))
         self.w_hh = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh, std=.1 / (hidden_dim**0.5))
-        
+
+        if w_hh_mask is not None:
+            self.w_hh_mask = w_hh_mask
+            self.w_hh.data *= w_hh_mask
+            self.w_hh.register_hook(lambda grad: grad * w_hh_mask)
+
         if w_in is not None:
             self.w_in = w_in
         else:
@@ -720,7 +728,7 @@ class HORNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, nonlinearity=torch.tanh, 
                  output_nonlinearity=torch.tanh, task="", mode="cont", form="rate",
                  noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, w_out = None, w_in = None,
-                 adv=False,hard_orth=False):
+                 adv=False,hard_orth=False, w_hh_rnn_mask=None, w_hh_tbrnn_mask=None):
         super(HORNN, self).__init__()
 
         self.hidden_dim=hidden_dim
@@ -730,8 +738,18 @@ class HORNN(nn.Module):
         self.w_hh_rnn = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh_rnn, std=.1 / (hidden_dim**0.5))
 
+        if w_hh_rnn_mask is not None:
+            self.w_hh_rnn_mask = w_hh_rnn_mask
+            self.w_hh_rnn.data *= w_hh_rnn_mask
+            self.w_hh_rnn.register_hook(lambda grad: grad * w_hh_rnn_mask)
+
         self.w_hh_tbrnn = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh_tbrnn, std=.1 / (hidden_dim))
+
+        if w_hh_tbrnn_mask is not None:
+            self.w_hh_tbrnn_mask = w_hh_tbrnn_mask
+            self.w_hh_tbrnn.data *= w_hh_tbrnn_mask
+            self.w_hh_tbrnn.register_hook(lambda grad: grad * w_hh_tbrnn_mask)
 
         if w_in is not None:
             self.w_in = w_in
