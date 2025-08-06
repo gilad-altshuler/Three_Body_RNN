@@ -24,7 +24,7 @@ present (right).
 |Fig 4. Expanding solution space|[`2_Solution_space.ipynb`](#Expanding-solution-space)|
 |Fig 5. Mapping tasks space|Created manually in Biorender.com|
 |Table 1. Teacher-student inference results on K-bit Flip-Flop and sine wave synthetic tasks|[`3_Teacher_Student.ipynb`](#Teacher-student-setup-on-synthetic-neuroscience-data)|
-|Table 2. Model CKA scores performance on 30-MultiFate inference task|`4_MultiFate inference.ipynb`|
+|Table 2. Model CKA scores performance on 30-MultiFate inference task|[`4_MultiFate inference.ipynb`](#Multi-Fate-inference-task)|
 
 ## Results - how to run
 ### Start
@@ -37,7 +37,7 @@ conda activate TBRNN_env
 (on Linux)
 
 ### Low-rank TBRNN validation
-To reproduce the low-rank and theory validation data - run train script with nohup:
+To reproduce the low-rank and theory validation data - run train script (you can also add nohup):
 ```
 training_scripts/validation/run_multiple.sh > ../master_log.txt 2>&1 &
 ```
@@ -48,7 +48,7 @@ Next, run the notebook:
 > Note that notebook can be run independently without the reproduction train - data used already located in data/validation directory
 
 ### Expanding solution space
-To reproduce - run train script with nohup:
+To reproduce - run train script (you can also add nohup):
 ```
 training_scripts/solution_space/run_multiple.sh > ../master_log.txt 2>&1 &
 ```
@@ -59,7 +59,7 @@ Next, run the notebook:
 > Note that notebook can be run independently without the reproduction train - data used already located in data/solution_space directory
 
 ### Teacher-student setup on synthetic neuroscience data
-To reproduce - run train script with nohup:
+To reproduce - run train script (you can also add nohup):
 ```
 training_scripts/teacher_student/run_multiple_tasks.sh > ../master_log.txt 2>&1 &
 ```
@@ -70,3 +70,14 @@ Next, run the notebook:
 > Note that train in this task requires many gpus / much time, since we set the default to 30 runs and 6 ranks models for each student for 4 student. For the 4 defined tasks altogether its 30x6x4x4=2880 train procedures. If you want different amount of runs please set "runs" variable inside both "run_multiple_sin.sh", "run_multiple_flipflop.sh", and "collect_data.py" in directory "training_scripts/teacher_student/". You need to change them וniformly. Alternatively, you may set different ranks range, or run speceific task with "run_multiple_sin.sh", "run_multiple_flipflop.sh".
 
 > Also Note that notebook can be run independently without the reproduction train - data used already located in data/teacher_student directory
+
+### Multi-Fate inference task
+To reproduce - run train script (you can also add nohup):
+```
+training_scripts/multifate_inference/run_multiple.sh > ../master_log.txt 2>&1 &
+```
+Next, run the notebook:
+
+[4_MultiFate_inference.ipynb](notebooks/4_MultiFate_inference.ipynb)
+*(May be run via **google colab** or **linux terminal**)*
+> Note that notebook can be run independently without the reproduction train - data used already located in data/multifate_inference directory
