@@ -43,7 +43,7 @@ training_scripts/validation/run_multiple.sh > ../master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
-[notebooks/1_Low_rank_TBRNN_validation.ipynb](notebooks/1_Low_rank_TBRNN_validation.ipynb)
+[1_Low_rank_TBRNN_validation.ipynb](notebooks/1_Low_rank_TBRNN_validation.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
 > Note that notebook can be run independently without the reproduction train - data used already located in data/validation directory
 
