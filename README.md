@@ -67,5 +67,6 @@ Next, run the notebook:
 
 [notebooks/3_Teacher_Student.ipynb](notebooks/3_Teacher_Student.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
-> Note that train in this task requires many gpus / much time, since we set the default to 30 runs and 6 ranks models for each student for 4 student. For the 4 defined tasks altogether its 30*6*4*4=2880 train procedures. If you want different amount of runs please set "runs" variable inside both "run_multiple_sin.sh", "run_multiple_flipflop.sh", and "collect_data.py" in directory "training_scripts/teacher_student/". You need to change them וniformly. Alternatively, you may set different ranks range, or run speceific task with "run_multiple_sin.sh", "run_multiple_flipflop.sh".
+> Note that train in this task requires many gpus / much time, since we set the default to 30 runs and 6 ranks models for each student for 4 student. For the 4 defined tasks altogether its 30x6x4x4=2880 train procedures. If you want different amount of runs please set "runs" variable inside both "run_multiple_sin.sh", "run_multiple_flipflop.sh", and "collect_data.py" in directory "training_scripts/teacher_student/". You need to change them וniformly. Alternatively, you may set different ranks range, or run speceific task with "run_multiple_sin.sh", "run_multiple_flipflop.sh".
+
 > Also Note that notebook can be run independently without the reproduction train - data used already located in data/teacher_student directory
