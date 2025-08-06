@@ -41,7 +41,7 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
 
     optimizer = torch.optim.Adam(rnn_student.parameters(), lr=lr)
 
-    _ = train(rnn_student,input[:data_size,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
+    _ = train(rnn_student,input[:,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
               scheduler=scheduler,mask_train=None,batch_size=data_size,
               hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
 
@@ -52,7 +52,7 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
                           noise_std=0.0, tau=0.2, Win_bias=True, Wout_bias=True, w_out=w_out).to(DEVICE)
 
     optimizer = torch.optim.Adam(tbrnn_student.parameters(), lr=lr)
-    _ = train(tbrnn_student,input[:data_size,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
+    _ = train(tbrnn_student,input[:,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
               scheduler=scheduler,mask_train=None,batch_size=data_size,
               hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
 
@@ -64,10 +64,12 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
 
     optimizer = torch.optim.Adam(hornn_student.parameters(), lr=lr)
 
-    _ = train(hornn_student,input[:data_size,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
+    _ = train(hornn_student,input[:,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
               scheduler=scheduler,mask_train=None,batch_size=data_size,
               hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
 
+    torch.save(input, run_dir / "input.pth")
+    torch.save(x_half, run_dir / "target.pth")
     torch.save(rnn_student.state_dict(), run_dir / "RNN_student.pth")
     torch.save(tbrnn_student.state_dict(), run_dir / "TBRNN_student.pth")
     torch.save(hornn_student.state_dict(), run_dir / "HORNN_student.pth")
@@ -80,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_size", type=int, default=256, help="Size of the training data")
     parser.add_argument("--N", type=int, default=30, help="Number of proteins in the task")
     parser.add_argument("--T", type=int, default=100, help="Time steps for the task")
-    parser.add_argument("--epochs", type=int, default=20000, help="Number of epochs for training the teachers")
+    parser.add_argument("--epochs", type=int, default=30000, help="Number of epochs for training the teachers")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rates for the teacher models")
     args, extras = parser.parse_known_intermixed_args()
 
