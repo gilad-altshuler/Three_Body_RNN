@@ -25,7 +25,7 @@ input_size = output_size = hidden_dim = N = 30
 
 # load multifate data
 params = (dt, Kd, n, alpha, beta, inducers) = (0.2, 1, 1.5, 3.6, 90.0, 0)
-input, x = generate_data(data_size, T, N, *params)
+input, x_half = generate_data(data_size, T, N, *params)
 
 runs = 30
 
@@ -53,8 +53,8 @@ for run in range(1,runs+1):
         student.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
 
         # evaluate students
-        multifate = x[:,1:].reshape(-1,hidden_dim)
-        trajectory = student(input[:data_size,1:,:],x[:,0,:])[0].reshape(-1,hidden_dim).detach().clone()
+        multifate = x_half[:,1:].reshape(-1,hidden_dim)
+        trajectory = student(input[:,1:,:],x_half[:,0,:])[0].reshape(-1,hidden_dim).detach().clone()
         cka_score = heavy_cka(multifate, trajectory)
         torch.cuda.empty_cache()
 
