@@ -127,7 +127,7 @@ class TBRNN(nn.Module):
         if w_hh_mask is not None:
             self.w_hh_mask = w_hh_mask
             self.w_hh.data *= w_hh_mask
-            self.w_hh.register_hook(lambda grad: grad * w_hh_mask)
+            self.w_hh.register_hook(lambda grad: grad * (w_hh_mask.to(grad.device)))
 
         if w_in is not None:
             self.w_in = w_in
@@ -238,7 +238,7 @@ class RNN(nn.Module):
         if w_hh_mask is not None:
             self.w_hh_mask = w_hh_mask
             self.w_hh.data *= w_hh_mask
-            self.w_hh.register_hook(lambda grad: grad * w_hh_mask)
+            self.w_hh.register_hook(lambda grad: grad * (w_hh_mask.to(grad.device)))
 
         if w_in is not None:
             self.w_in = w_in
@@ -741,7 +741,7 @@ class HORNN(nn.Module):
         if w_hh_rnn_mask is not None:
             self.w_hh_rnn_mask = w_hh_rnn_mask
             self.w_hh_rnn.data *= w_hh_rnn_mask
-            self.w_hh_rnn.register_hook(lambda grad: grad * w_hh_rnn_mask)
+            self.w_hh_rnn.register_hook(lambda grad: grad * (w_hh_rnn_mask.to(grad.device)))
 
         self.w_hh_tbrnn = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim,hidden_dim))
         nn.init.normal_(self.w_hh_tbrnn, std=.1 / (hidden_dim))
@@ -749,7 +749,7 @@ class HORNN(nn.Module):
         if w_hh_tbrnn_mask is not None:
             self.w_hh_tbrnn_mask = w_hh_tbrnn_mask
             self.w_hh_tbrnn.data *= w_hh_tbrnn_mask
-            self.w_hh_tbrnn.register_hook(lambda grad: grad * w_hh_tbrnn_mask)
+            self.w_hh_tbrnn.register_hook(lambda grad: grad * (w_hh_tbrnn_mask.to(grad.device)))
 
         if w_in is not None:
             self.w_in = w_in
