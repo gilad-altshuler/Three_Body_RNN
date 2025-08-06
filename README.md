@@ -20,7 +20,7 @@ present (right).
 |----------------------|------|
 |Fig 1. Motivation: Three-body interactions|Created manually in Biorender.com|
 |Fig 2. Neuroscience tasks and their biological gene expression counterparts|Created manually in Biorender.com|
-|Fig 3. Theory validation on K-Bit Flipflop task|`1_Low_rank_TBRNN_validation.ipynb`|
+|Fig 3. Theory validation on K-Bit Flipflop task|[`1_Low_rank_TBRNN_validation.ipynb`](#Low-rank TBRNN validation)|
 |Fig 4. Expanding solution space|`2_Solution_space.ipynb`|
 |Fig 5. Mapping tasks space|Created manually in Biorender.com|
 |Table 1. Teacher-student inference results on K-bit Flip-Flop and sine wave synthetic tasks|`3_Teacher_Student.ipynb`|
@@ -54,7 +54,7 @@ training_scripts/solution_space/run_multiple.sh > ../master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
-[notebooks/2_Solution_space.ipynb](notebooks/2_Solution_space.ipynb)
+[2_Solution_space.ipynb](notebooks/2_Solution_space.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
 > Note that notebook can be run independently without the reproduction train - data used already located in data/solution_space directory
 
@@ -65,7 +65,7 @@ training_scripts/teacher_student/run_multiple_tasks.sh > ../master_log.txt 2>&1 
 ```
 Next, run the notebook:
 
-[notebooks/3_Teacher_Student.ipynb](notebooks/3_Teacher_Student.ipynb)
+[3_Teacher_Student.ipynb](notebooks/3_Teacher_Student.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
 > Note that train in this task requires many gpus / much time, since we set the default to 30 runs and 6 ranks models for each student for 4 student. For the 4 defined tasks altogether its 30x6x4x4=2880 train procedures. If you want different amount of runs please set "runs" variable inside both "run_multiple_sin.sh", "run_multiple_flipflop.sh", and "collect_data.py" in directory "training_scripts/teacher_student/". You need to change them וniformly. Alternatively, you may set different ranks range, or run speceific task with "run_multiple_sin.sh", "run_multiple_flipflop.sh".
 
