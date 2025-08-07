@@ -57,7 +57,11 @@ for run in range(1,runs+1):
         cka_score = heavy_cka(multifate, trajectory)
         torch.cuda.empty_cache()
 
-        stats[model_name][i] = cka_score
+        stats[model_name][i] = cka_score.item()
+
+for model in models:
+    model_name = get_model_str(model)
+    stats[model_name] = np.array(stats[model_name])
 
 with open(DATA_DIR / "stats.pkl", "wb") as f:
     pickle.dump(stats, f)

@@ -33,46 +33,25 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
     if not os.path.isdir(run_dir):
         run_dir.mkdir(parents=True)
 
-    # training RNN
-    print("Training RNN student...")
-    rnn_student = RNN(input_size, output_size, hidden_dim, mode='cont', form='rate',
-                      nonlinearity=torch.tanh, output_nonlinearity=torch.sigmoid, task="MultiFate_task",
-                      noise_std=0.0, tau=0.2, Win_bias=True, Wout_bias=True, w_out=w_out).to(DEVICE)
+    models = [RNN, TBRNN, HORNN]
+    for model in models:
+        model_name = get_model_str(model)
+        print(f"Training {model_name} student...")
 
-    optimizer = torch.optim.Adam(rnn_student.parameters(), lr=lr)
+        student = model(input_size, output_size, hidden_dim, mode='cont', form='rate',
+                        nonlinearity=torch.tanh, output_nonlinearity=torch.sigmoid, task="MultiFate_task",
+                        noise_std=0.0, tau=0.2, Win_bias=True, Wout_bias=True, w_out=w_out).to(DEVICE)
 
-    _ = train(rnn_student,input[:,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,
-              hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
+        optimizer = torch.optim.Adam(student.parameters(), lr=lr)
 
-    # training TBRNN
-    print("Training TBRNN student...")
-    tbrnn_student = TBRNN(input_size, output_size, hidden_dim, mode='cont', form='rate',
-                          nonlinearity=torch.tanh, output_nonlinearity=torch.sigmoid, task="MultiFate_task",
-                          noise_std=0.0, tau=0.2, Win_bias=True, Wout_bias=True, w_out=w_out).to(DEVICE)
+        _ = train(student, input[:,1:,:], x_half[:,1:,:], epochs, optimizer, criterion,
+                  scheduler=scheduler, mask_train=None, batch_size=data_size,
+                  hidden=hidden, clip_gradient=None, keep_best=True, plot=False)
 
-    optimizer = torch.optim.Adam(tbrnn_student.parameters(), lr=lr)
-    _ = train(tbrnn_student,input[:,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,
-              hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
-
-    # training HORNN
-    print("Training HORNN student...")
-    hornn_student = HORNN(input_size, output_size, hidden_dim, mode='cont', form='rate',
-                          nonlinearity=torch.tanh, output_nonlinearity=torch.sigmoid, task="MultiFate_task",
-                          noise_std=0.0, tau=0.2, Win_bias=True, Wout_bias=True, w_out=w_out).to(DEVICE)
-
-    optimizer = torch.optim.Adam(hornn_student.parameters(), lr=lr)
-
-    _ = train(hornn_student,input[:,1:,:],x_half[:,1:,:],epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,
-              hidden=hidden,clip_gradient=None,keep_best=True,plot=False)
+        torch.save(student.state_dict(), run_dir / f"{model_name}_student.pth")
 
     torch.save(input, run_dir / "input.pth")
     torch.save(x_half, run_dir / "target.pth")
-    torch.save(rnn_student.state_dict(), run_dir / "RNN_student.pth")
-    torch.save(tbrnn_student.state_dict(), run_dir / "TBRNN_student.pth")
-    torch.save(hornn_student.state_dict(), run_dir / "HORNN_student.pth")
 
 if __name__ == "__main__":
     import argparse
