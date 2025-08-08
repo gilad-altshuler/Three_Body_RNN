@@ -8,12 +8,12 @@ import pickle
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
 from Models import RNN, TBRNN, HORNN, get_model_str
-from utils import heavy_cka
+from utils import heavy_cka,cka_linear_streaming
 ROOT = Path(__file__).absolute().parent.parent.parent
 RUN_DIR = ROOT.parent / "runs" / "multifate_inference"
 DATA_DIR = ROOT / "data" / "multifate_inference"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+# DEVICE="cpu"
 if not os.path.isdir(RUN_DIR):
     print(f"Run directory {RUN_DIR} does not exist. Please run the training script first.")
     exit(1)
@@ -54,7 +54,7 @@ for run in range(1,runs+1):
         # evaluate students
         multifate = x_half[:,1:].reshape(-1,hidden_dim)
         trajectory = student(input[:,1:,:],x_half[:,0,:])[0].reshape(-1,hidden_dim).detach().clone()
-        cka_score = heavy_cka(multifate, trajectory)
+        cka_score = cka_linear_streaming(multifate, trajectory)
         torch.cuda.empty_cache()
 
         stats[model_name][i] = cka_score.item()
@@ -62,6 +62,9 @@ for run in range(1,runs+1):
 for model in models:
     model_name = get_model_str(model)
     stats[model_name] = np.array(stats[model_name])
+
+if not os.path.isdir(DATA_DIR):
+    DATA_DIR.mkdir(parents=True)
 
 with open(DATA_DIR / "stats.pkl", "wb") as f:
     pickle.dump(stats, f)

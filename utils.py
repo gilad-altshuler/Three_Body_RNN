@@ -408,3 +408,36 @@ def CKA(X, Y):
     Calculates CKA.
     """
     return (np.linalg.norm(X.T @ Y) ** 2) / np.linalg.norm(X.T @ X) / np.linalg.norm(Y.T @ Y)
+
+
+@torch.no_grad()
+def cka_linear_streaming(X, Y, chunk=8192, accum_device="cpu"):
+    """
+    X: (n, dx), Y: (n, dy). Works on huge n without n×n Grams.
+    chunk: rows processed per step.
+    accum_device: where to keep the small accumulators ("cpu" is safest).
+    """
+    assert X.shape[0] == Y.shape[0]
+    n = X.shape[0]
+
+    # center along samples
+    Xc = X - X.mean(0, keepdim=True)
+    Yc = Y - Y.mean(0, keepdim=True)
+
+    dx, dy = Xc.shape[1], Yc.shape[1]
+    Sxx = torch.zeros((dx, dx), device=accum_device, dtype=torch.float64)
+    Syy = torch.zeros((dy, dy), device=accum_device, dtype=torch.float64)
+    Sxy = torch.zeros((dx, dy), device=accum_device, dtype=torch.float64)
+
+    for i in range(0, n, chunk):
+        xs = Xc[i:i+chunk]
+        ys = Yc[i:i+chunk]
+        # do the heavy multiplies on whatever device xs/ys live on (GPU), then move results to accum_device
+        Sxx += (xs.T @ xs).to(accum_device, dtype=torch.float64)
+        Syy += (ys.T @ ys).to(accum_device, dtype=torch.float64)
+        Sxy += (xs.T @ ys).to(accum_device, dtype=torch.float64)
+
+    hsic = (Sxy**2).sum()
+    normx = (Sxx**2).sum().sqrt()
+    normy = (Syy**2).sum().sqrt()
+    return (hsic / (normx * normy)).to(torch.float32)
