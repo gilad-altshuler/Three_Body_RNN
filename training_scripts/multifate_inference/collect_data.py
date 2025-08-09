@@ -8,7 +8,8 @@ import pickle
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
 from Models import RNN, TBRNN, HORNN, get_model_str
-from utils import heavy_cka,cka_linear_streaming
+from tasks.MultiFate_task import evaluate
+
 ROOT = Path(__file__).absolute().parent.parent.parent
 RUN_DIR = ROOT.parent / "runs" / "multifate_inference"
 DATA_DIR = ROOT / "data" / "multifate_inference"
@@ -27,11 +28,17 @@ runs = 30
 models = [RNN, TBRNN, HORNN]
 
 stats = {
+    "cka": {
     "rnn": [None for _ in range(runs)],
     "tbrnn": [None for _ in range(runs)],
     "hornn": [None for _ in range(runs)],
+    },
+    "r2": {
+    "rnn": [None for _ in range(runs)],
+    "tbrnn": [None for _ in range(runs)],
+    "hornn": [None for _ in range(runs)],
+    },
 }
-
 for run in range(1,runs+1):
     i = run-1
     print(f"Reading stats of run: {run:03}")
@@ -52,16 +59,15 @@ for run in range(1,runs+1):
         student.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
 
         # evaluate students
-        multifate = x_half[:,1:].reshape(-1,hidden_dim)
-        trajectory = student(input[:,1:,:],x_half[:,0,:])[0].reshape(-1,hidden_dim).detach().clone()
-        cka_score = cka_linear_streaming(multifate, trajectory)
-        torch.cuda.empty_cache()
+        r2, cka = evaluate(student, input[:,1:,:], x_half[:,1:], hidden=x_half[:,0,:], r2_mode='per_neuron', r2_all=False)
+        stats['r2'][model_name][i] = r2
+        stats['cka'][model_name][i] = cka
 
-        stats[model_name][i] = cka_score.item()
 
 for model in models:
     model_name = get_model_str(model)
-    stats[model_name] = np.array(stats[model_name])
+    stats['r2'][model_name] = np.array(stats['r2'][model_name])
+    stats['cka'][model_name] = np.array(stats['cka'][model_name])
 
 if not os.path.isdir(DATA_DIR):
     DATA_DIR.mkdir(parents=True)
