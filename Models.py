@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import TensorDataset, DataLoader
-import utils
+from utils import project_L_orthogonal_to_I, gram_schmidt
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
@@ -404,7 +404,7 @@ class Low_Rank_TBRNN(nn.Module):
             input_I = self.w_in(u_t)
 
             if self.hard_orth:
-                L = utils.project_L_orthogonal_to_I(self.L,self.w_in.weight,self.w_in.bias)
+                L = project_L_orthogonal_to_I(self.L,self.w_in.weight,self.w_in.bias)
             else:
                 L = self.L
             # calculating: sum h_t^T @ (1/N^2 * L_r @ M_r @ N_r) @ ht
@@ -460,7 +460,6 @@ class Low_Rank_TBRNN(nn.Module):
 
     def normalize_tensor(self):
         # first, check that vecs are independent in each L,M,N matrices
-        from utils import gram_schmidt
         if not gram_schmidt(self.L.T.cpu().detach().clone().numpy()):
             raise Exception(f"L vectors are linear dependent, cannot normalize")
         if not gram_schmidt(self.M.T.cpu().detach().clone().numpy()):
