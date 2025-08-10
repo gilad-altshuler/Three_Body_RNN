@@ -168,31 +168,32 @@ class TBRNN(nn.Module):
         # u (batch_size, seq_length, input_size)
         # hidden (batch_size, hidden_dim)
         # r_out (batch_size, time_steps, hidden_size)
-        DEVICE = next(self.parameters()).device
-        b_size, seq_length = u.size(0), u.size(1)
-        hid = self.hidden_dim
-        noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
+        DEVICE = u.device
+        B, T, _ = u.shape
+        H = self.hidden_dim
+        u_tbI = u.transpose(0,1).contiguous()
+        noise = torch.randn(T, B, H, device=DEVICE)
 
-        trajectories = torch.empty((seq_length, b_size, hid), device=DEVICE)
+        traj = torch.empty((T, B, H), device=DEVICE)
         if x0 is None:
-            x0 = torch.zeros((b_size, hid), device=DEVICE)
+            x0 = torch.zeros((B, H), device=DEVICE)
         x = x0
 
-        for t, u_t in enumerate(u.permute(1, 0, 2)):
+        for t in range(T):
+            u_t = u_tbI[t]
             if self.form == 'voltage':
                 r = x
             elif self.form == 'rate':
                 r = self.nonlinearity(x)
 
             # calculating: input weight
-            input_I = self.w_in(u_t)
-
-            hidden_W = (r.view(b_size,1,1,hid) @ self.w_hh.view(1,hid,hid,hid) @ r.view(b_size,1,hid,1)).reshape((b_size,hid))
+            input_part = self.w_in(u_t)
+            recurrent_part = torch.einsum('bj,ijk,bk->bi', r, self.w_hh, r)
 
             if self.form == 'voltage':
-                rec_x = self.nonlinearity(hidden_W + input_I)
+                rec_x = self.nonlinearity(recurrent_part + input_part)
             elif self.form == 'rate':
-                rec_x = hidden_W + input_I
+                rec_x = recurrent_part + input_part
 
             # update hidden variable x accrding to the currect mode
             if self.mode == 'cont':
@@ -200,133 +201,24 @@ class TBRNN(nn.Module):
             elif self.mode == 'disc':
                 x = rec_x
 
-            trajectories[t] = x
+            traj[t] = x
 
         # need trajectories to be (batch_size, time_steps, hidden_size) dim:
-        trajectories = trajectories.permute(1, 0, 2)
+        traj = traj.transpose(0,1).contiguous()
 
         # get final output
         if self.form == 'voltage':
-            output = self.w_out(trajectories)
+            output = self.w_out(traj)
         elif self.form == 'rate':
-            output = self.w_out(self.output_nonlinearity(trajectories))
+            output = self.w_out(self.output_nonlinearity(traj))
 
-        return output, x, trajectories
+        return output, x, traj
 
 
 
     def clone(self):
         new_net = TBRNN(self.input_size, self.output_size, self.hidden_dim, self.nonlinearity,self.output_nonlinearity,
                          self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(next(self.parameters()).device)
-        new_net.w_in = copy.deepcopy(self.w_in)
-        new_net.w_hh = nn.Parameter(self.w_hh.detach().clone())
-        new_net.w_out = copy.deepcopy(self.w_out)
-        return new_net
-
-class RNN(nn.Module):
-    def __init__(self, input_size, output_size, hidden_dim, nonlinearity=torch.tanh, output_nonlinearity=torch.tanh, 
-                 task="", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, 
-                 w_out = None, w_in = None,hard_orth=False,w_hh_mask=None):
-        super(RNN, self).__init__()
-
-        self.hidden_dim=hidden_dim
-
-        #self.w_hh = nn.Parameter(nn.init.xavier_uniform_(torch.empty((hidden_dim,hidden_dim))))
-        self.w_hh = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim))
-        nn.init.normal_(self.w_hh, std=.1 / (hidden_dim**0.5))
-
-        if w_hh_mask is not None:
-            self.w_hh_mask = w_hh_mask
-            self.w_hh.data *= w_hh_mask
-            self.w_hh.register_hook(lambda grad: grad * (w_hh_mask.to(grad.device)))
-
-        if w_in is not None:
-            self.w_in = w_in
-        else:
-            self.w_in = nn.Linear(input_size, hidden_dim, bias = Win_bias)
-            #nn.init.xavier_uniform_(self.w_in.weight)  ###init
-            nn.init.normal_(self.w_in.weight)
-            if Win_bias:
-                nn.init.zeros_(self.w_in.bias)
-
-        self.nonlinearity = nonlinearity
-        self.output_nonlinearity = output_nonlinearity
-        
-        if w_out is not None:
-            self.w_out = w_out
-        else:
-            self.w_out = nn.Linear(hidden_dim, input_size, bias = Wout_bias)
-
-        self.task = task
-
-        if mode not in ['cont', 'disc']:
-            raise Exception("Error: Mode does not exists.")
-        self.mode = mode
-
-        if form not in ['rate', 'voltage']:
-            raise Exception("Error: Form does not exists.")
-        self.form = form
-
-        self.input_size = input_size
-        self.output_size = output_size
-        self.noise_std = noise_std
-        self.tau = tau
-        self.Win_bias = Win_bias
-        self.Wout_bias = Wout_bias
-        self.hard_orth = hard_orth
-
-    def forward(self, u, x0):
-        # u (batch_size, seq_length, input_size)
-        # x0 (batch_size, hidden_dim)
-        # trajectories (batch_size, time_steps, hidden_size)
-        DEVICE = next(self.parameters()).device
-        b_size, seq_length = u.size(0), u.size(1)
-        hid = self.hidden_dim
-        noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
-
-        trajectories = torch.empty((seq_length, b_size, hid), device=DEVICE)
-        if x0 is None:
-            x0 = torch.zeros((b_size, hid), device=DEVICE)
-        x = x0
-
-        for t, u_t in enumerate(u.permute(1, 0, 2)):
-            if self.form == 'voltage':
-                r = x
-            elif self.form == 'rate':
-                r = self.nonlinearity(x)
-
-            # calculating: input weight
-            input_I = self.w_in(u_t)
-
-            hidden_W =  r @ self.w_hh.T #/ (self.hidden_dim if self.mode == 'cont' else 1.0)
-
-            if self.form == 'voltage':
-                rec_x = self.nonlinearity(hidden_W + input_I)
-            elif self.form == 'rate':
-                rec_x = hidden_W + input_I
-
-            # update hidden variable x accrding to the currect mode
-            if self.mode == 'cont':
-                x = x + self.noise_std * noise[t] + self.tau * (-x + rec_x)
-            elif self.mode == 'disc':
-                x = rec_x
-
-            trajectories[t] = x
-
-        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
-        trajectories = trajectories.permute(1, 0, 2)
-
-        # get final output
-        if self.form == 'voltage':
-            output = self.w_out(trajectories)
-        elif self.form == 'rate':
-            output = self.w_out(self.output_nonlinearity(trajectories))
-
-        return output, x, trajectories
-
-    def clone(self):
-        new_net = RNN(self.input_size, self.output_size, self.hidden_dim, self.nonlinearity, self.output_nonlinearity,
-                                 self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(next(self.parameters()).device)
         new_net.w_in = copy.deepcopy(self.w_in)
         new_net.w_hh = nn.Parameter(self.w_hh.detach().clone())
         new_net.w_out = copy.deepcopy(self.w_out)
@@ -384,36 +276,44 @@ class Low_Rank_TBRNN(nn.Module):
     def forward(self, u, x0):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
-        # trajectories (batch_size, time_steps, hidden_size)
-        DEVICE = next(self.parameters()).device
-        b_size, seq_length = u.size(0), u.size(1)
-        hid = self.hidden_dim
-        noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
+        # traj (batch_size, time_steps, hidden_size)
+        DEVICE = u.device
+        B, T, _ = u.shape
+        H = self.hidden_dim
+        u_tbI = u.transpose(0,1).contiguous()
+        noise = torch.randn(T, B, H, device=DEVICE)
 
-        trajectories = torch.empty((seq_length, b_size, hid), device=DEVICE)
+        traj = torch.empty((T, B, H), device=DEVICE)
         if x0 is None:
-            x0 = torch.zeros((b_size, hid), device=DEVICE)
+            x0 = torch.zeros((B, H), device=DEVICE)
         x = x0
 
-        for t,u_t in enumerate(u.permute(1, 0, 2)):
+        # Scale factor (continuous vs discrete)
+        scale = (1.0 / (H**2)) if self.mode == "cont" else 1.0
+
+        for t in range(T):
+            u_t = u_tbI[t]
             if self.form == 'voltage':
                 r = x
             elif self.form == 'rate':
                 r = self.nonlinearity(x)
             # calculating: input weight
-            input_I = self.w_in(u_t)
+            input_part = self.w_in(u_t)
 
             if self.hard_orth:
                 L = project_L_orthogonal_to_I(self.L,self.w_in.weight,self.w_in.bias)
             else:
                 L = self.L
             # calculating: sum h_t^T @ (1/N^2 * L_r @ M_r @ N_r) @ ht
-            hidden_W = ((r @ self.M) * (r @ self.N)) @ L.T / (self.hidden_dim**2 if self.mode == 'cont' else 1.0)
+            rM = r @ self.M                        # (B, R)
+            rN = r @ self.N                        # (B, R)
+            recurrent_part = (rM * rN) @ L.T              # (B, H)
+            recurrent_part = recurrent_part * scale
 
             if self.form == 'voltage':
-                rec_x = self.nonlinearity(hidden_W + input_I)
+                rec_x = self.nonlinearity(recurrent_part + input_part)
             elif self.form == 'rate':
-                rec_x = hidden_W + input_I
+                rec_x = recurrent_part + input_part
 
             # update hidden variable x accrding to the currect mode
             if self.mode == 'cont':
@@ -421,18 +321,18 @@ class Low_Rank_TBRNN(nn.Module):
             elif self.mode == 'disc':
                 x = rec_x
         
-            trajectories[t] = x
+            traj[t] = x
 
-        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
-        trajectories = trajectories.permute(1,0,2)
+        # need trajectory to be (batch_size, time_steps, hidden_size) dim:
+        traj = traj.transpose(0,1).contiguous()
 
         # get final output
         if self.form == 'voltage':
-            output = self.w_out(trajectories)
+            output = self.w_out(traj)
         elif self.form == 'rate':
-            output = self.w_out(self.output_nonlinearity(trajectories))
+            output = self.w_out(self.output_nonlinearity(traj))
 
-        return output, x, trajectories
+        return output, x, traj
 
     def lr_to_tensor(self):
         L = self.L.T.cpu().detach()
@@ -475,6 +375,120 @@ class Low_Rank_TBRNN(nn.Module):
             return (self.L * coef / norml)[:, indices], (self.M * coef / normm)[:, indices], (self.N * coef / normn)[:, indices]
         else: 
             return (self.L * coef / norml)[:, indices], (self.N * coef / normn)[:, indices], (self.M * coef / normm)[:, indices]
+        
+
+class RNN(nn.Module):
+    def __init__(self, input_size, output_size, hidden_dim, nonlinearity=torch.tanh, output_nonlinearity=torch.tanh, 
+                 task="", mode="cont", form="rate", noise_std=5e-2, tau=0.2, Win_bias=True, Wout_bias=True, 
+                 w_out = None, w_in = None,hard_orth=False,w_hh_mask=None):
+        super(RNN, self).__init__()
+
+        self.hidden_dim=hidden_dim
+
+        #self.w_hh = nn.Parameter(nn.init.xavier_uniform_(torch.empty((hidden_dim,hidden_dim))))
+        self.w_hh = nn.Parameter(torch.Tensor(hidden_dim,hidden_dim))
+        nn.init.normal_(self.w_hh, std=.1 / (hidden_dim**0.5))
+
+        if w_hh_mask is not None:
+            self.w_hh_mask = w_hh_mask
+            self.w_hh.data *= w_hh_mask
+            self.w_hh.register_hook(lambda grad: grad * (w_hh_mask.to(grad.device)))
+
+        if w_in is not None:
+            self.w_in = w_in
+        else:
+            self.w_in = nn.Linear(input_size, hidden_dim, bias = Win_bias)
+            #nn.init.xavier_uniform_(self.w_in.weight)  ###init
+            nn.init.normal_(self.w_in.weight)
+            if Win_bias:
+                nn.init.zeros_(self.w_in.bias)
+
+        self.nonlinearity = nonlinearity
+        self.output_nonlinearity = output_nonlinearity
+        
+        if w_out is not None:
+            self.w_out = w_out
+        else:
+            self.w_out = nn.Linear(hidden_dim, input_size, bias = Wout_bias)
+
+        self.task = task
+
+        if mode not in ['cont', 'disc']:
+            raise Exception("Error: Mode does not exists.")
+        self.mode = mode
+
+        if form not in ['rate', 'voltage']:
+            raise Exception("Error: Form does not exists.")
+        self.form = form
+
+        self.input_size = input_size
+        self.output_size = output_size
+        self.noise_std = noise_std
+        self.tau = tau
+        self.Win_bias = Win_bias
+        self.Wout_bias = Wout_bias
+        self.hard_orth = hard_orth
+
+    def forward(self, u, x0):
+        # u (batch_size, seq_length, input_size)
+        # x0 (batch_size, hidden_dim)
+        # traj (batch_size, time_steps, hidden_size)
+        DEVICE = u.device
+        B, T, _ = u.shape
+        H = self.hidden_dim
+        u_tbI = u.transpose(0,1).contiguous()
+        noise = torch.randn(T, B, H, device=DEVICE)
+
+        traj = torch.empty((T, B, H), device=DEVICE)
+        if x0 is None:
+            x0 = torch.zeros((B, H), device=DEVICE)
+        x = x0
+
+        for t in range(T):
+            u_t = u_tbI[t]
+            if self.form == 'voltage':
+                r = x
+            elif self.form == 'rate':
+                r = self.nonlinearity(x)
+
+            # calculating: input weight
+            input_part = self.w_in(u_t)
+            recurrent_part =  r @ self.w_hh.T
+
+            if self.form == 'voltage':
+                rec_x = self.nonlinearity(recurrent_part + input_part)
+            elif self.form == 'rate':
+                rec_x = recurrent_part + input_part
+
+            # update hidden variable x accrding to the currect mode
+            if self.mode == 'cont':
+                x = x + self.noise_std * noise[t] + self.tau * (-x + rec_x)
+            elif self.mode == 'disc':
+                x = rec_x
+
+            traj[t] = x
+
+        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
+        traj = traj.permute(1, 0, 2)
+
+        # get final output
+        if self.form == 'voltage':
+            output = self.w_out(traj)
+        elif self.form == 'rate':
+            output = self.w_out(self.output_nonlinearity(traj))
+
+        return output, x, traj
+
+    def clone(self):
+        new_net = RNN(self.input_size, self.output_size, self.hidden_dim, self.nonlinearity, self.output_nonlinearity,
+                                 self.task, self.mode, self.form, self.noise_std, self.tau, self.Win_bias, self.Wout_bias).to(next(self.parameters()).device)
+        new_net.w_in = copy.deepcopy(self.w_in)
+        new_net.w_hh = nn.Parameter(self.w_hh.detach().clone())
+        new_net.w_out = copy.deepcopy(self.w_out)
+        return new_net
+
+
+
 class Low_Rank_RNN(nn.Module):
     def __init__(self, input_size, output_size, hidden_dim, rank=1, nonlinearity=torch.tanh, 
                  output_nonlinearity=torch.tanh, task="", mode="cont", form="rate",
@@ -526,31 +540,35 @@ class Low_Rank_RNN(nn.Module):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
         # trajectories (batch_size, time_steps, hidden_size)
-        DEVICE = next(self.parameters()).device
-        b_size, seq_length = u.size(0), u.size(1)
-        hid = self.hidden_dim
-        noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
+        DEVICE = u.device
+        B, T, _ = u.shape
+        H = self.hidden_dim
 
-        trajectories = torch.empty((seq_length, b_size, hid), device=DEVICE)
+        u_tbI = u.transpose(0,1).contiguous()
+        noise = torch.randn(T, B, H, device=DEVICE)
+
+        traj = torch.empty((T, B, H), device=DEVICE)
         if x0 is None:
-            x0 = torch.zeros((b_size, hid), device=DEVICE)
+            x0 = torch.zeros((B, H), device=DEVICE)
         x = x0
 
-        for t, u_t in enumerate(u.permute(1, 0, 2)):
+        scale = (1.0 / H) if self.mode == 'cont' else 1.0
+
+        for t in range(T):
+            u_t = u_tbI[t]
             if self.form == 'voltage':
                 r = x
             elif self.form == 'rate':
                 r = self.nonlinearity(x)
 
             # calculating: input weight
-            input_I = self.w_in(u_t)
-
-            hidden_W = r @ self.N @ self.M.T / (self.hidden_dim if self.mode == 'cont' else 1.0)
+            input_part = self.w_in(u_t)
+            hidden_part = r @ self.N @ self.M.T * scale
 
             if self.form == 'voltage':
-                rec_x = self.nonlinearity(hidden_W + input_I)
+                rec_x = self.nonlinearity(hidden_part + input_part)
             elif self.form == 'rate':
-                rec_x = hidden_W + input_I
+                rec_x = hidden_part + input_part
 
             # update hidden variable x accrding to the currect mode
             if self.mode == 'cont':
@@ -558,18 +576,18 @@ class Low_Rank_RNN(nn.Module):
             elif self.mode == 'disc':
                 x = rec_x
 
-            trajectories[t] = x
+            traj[t] = x
 
-        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
-        trajectories = trajectories.permute(1, 0, 2)
+        # need traj to be (batch_size, time_steps, hidden_size) dim:
+        traj = traj.permute(1, 0, 2)
 
         # get final output
         if self.form == 'voltage':
-            output = self.w_out(trajectories)
+            output = self.w_out(traj)
         elif self.form == 'rate':
-            output = self.w_out(self.output_nonlinearity(trajectories))
+            output = self.w_out(self.output_nonlinearity(traj))
 
-        return output, x, trajectories
+        return output, x, traj
 
     def lr_to_tensor(self):
         M = self.M.T.cpu().detach()
@@ -657,30 +675,35 @@ class Low_Rank_GRU(nn.Module):
     def forward(self, u, x0):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
-        # trajectories (batch_size, time_steps, hidden_size)
-        DEVICE = next(self.parameters()).device
-        b_size, seq_length = u.size(0), u.size(1)
-        hid = self.hidden_dim
-        noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
+        # traj (batch_size, time_steps, hidden_size)
+        DEVICE = u.device
+        B, T, _ = u.shape
+        H = self.hidden_dim
 
-        trajectories = torch.empty((seq_length, b_size, hid), device=DEVICE)
+        u_tbI = u.transpose(0,1).contiguous()
+        noise = torch.randn(T, B, H, device=DEVICE)
+
+        traj = torch.empty((T, B, H), device=DEVICE)
         if x0 is None:
-            x0 = torch.zeros((b_size, hid), device=DEVICE)
+            x0 = torch.zeros((B, H), device=DEVICE)
         x = x0
 
-        for t, u_t in enumerate(u.permute(1, 0, 2)):
+        scale = (1.0 / H) if self.mode == 'cont' else 1.0
+
+        for t in range(T):
+            u_t = u_tbI[t]
             # calculating: input weight
             ir = self.W_ir(u_t)
             iz = self.W_iz(u_t)
             ih = self.W_ih(u_t)
 
-            hr = (x @ self.N_hr) @ self.M_hr.T / (self.hidden_dim if self.mode == 'cont' else 1.0)
-            hz = (x @ self.N_hz) @ self.M_hz.T / (self.hidden_dim if self.mode == 'cont' else 1.0)
+            hr = (x @ self.N_hr) @ self.M_hr.T * scale
+            hz = (x @ self.N_hz) @ self.M_hz.T * scale
 
             r = torch.sigmoid(ir + hr)
             z = torch.sigmoid(iz + hz)
 
-            hh = ((r * x) @ self.N_hh) @ self.M_hh.T / (self.hidden_dim if self.mode == 'cont' else 1.0)
+            hh = ((r * x) @ self.N_hh) @ self.M_hh.T * scale
             g = self.nonlinearity(ih + hh)
 
             rec_x = (1.0 - z) * g + z * x
@@ -691,15 +714,15 @@ class Low_Rank_GRU(nn.Module):
             elif self.mode == 'disc':
                 x = rec_x
 
-            trajectories[t] = x
+            traj[t] = x
 
-        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
-        trajectories = trajectories.permute(1, 0, 2)
+        # need traj to be (batch_size, time_steps, hidden_size) dim:
+        traj = traj.transpose(1, 0).contiguous()
 
         # get final output
-        output = self.w_out(trajectories)
+        output = self.w_out(traj)
 
-        return output, x, trajectories
+        return output, x, traj
 
     def clone(self):
         DEVICE = next(self.parameters()).device
@@ -793,38 +816,40 @@ class HORNN(nn.Module):
     def forward(self, u, x0):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
-        # trajectories (batch_size, time_steps, hidden_size)
-        DEVICE = next(self.parameters()).device
-        b_size, seq_length = u.size(0), u.size(1)
-        hid = self.hidden_dim
-        noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
+        # traj (batch_size, time_steps, hidden_size)
+        DEVICE = u.device
+        B, T, _ = u.shape
+        H = self.hidden_dim
 
-        trajectories = torch.empty((seq_length, b_size, hid), device=DEVICE)
+        u_tbI = u.transpose(0,1).contiguous()
+        noise = torch.randn(T, B, H, device=DEVICE)
+
+        traj = torch.empty((T, B, H), device=DEVICE)
         if x0 is None:
-            x0 = torch.zeros((b_size, hid), device=DEVICE)
+            x0 = torch.zeros((B, H), device=DEVICE)
         x = x0
 
-        for t, u_t in enumerate(u.permute(1, 0, 2)):
+        for t in range(T):
+            u_t = u_tbI[t]
             if self.form == 'voltage':
                 r = x
             elif self.form == 'rate':
                 r = self.nonlinearity(x)
 
             # calculating: input weight
-            input_I = self.w_in(u_t)
-
-            hidden_W1 =  r @ self.w_hh_rnn.T 
-            hidden_W2 = (r.view(b_size,1,1,hid) @ self.w_hh_tbrnn.view(1,hid,hid,hid) @ r.view(b_size,1,hid,1)).reshape((b_size,hid))
+            input_part = self.w_in(u_t)
+            recurrent_part_rnn =  r @ self.w_hh_rnn.T 
+            recurrent_part_tbrnn = torch.einsum('bj,ijk,bk->bi', r, self.w_hh_tbrnn, r)
 
             if self.adv: # if setup is adversarial
-                hidden_W = torch.sigmoid(self.alpha) * hidden_W1 + (1-torch.sigmoid(self.alpha)) * hidden_W2
+                recurrent_part = torch.sigmoid(self.alpha) * recurrent_part_rnn + (1-torch.sigmoid(self.alpha)) * recurrent_part_tbrnn
             else:
-                hidden_W = hidden_W1 + hidden_W2
+                recurrent_part = recurrent_part_rnn + recurrent_part_tbrnn
 
             if self.form == 'voltage':
-                rec_x = self.nonlinearity(hidden_W + input_I)
+                rec_x = self.nonlinearity(recurrent_part + input_part)
             elif self.form == 'rate':
-                rec_x = hidden_W + input_I
+                rec_x = recurrent_part + input_part
 
             # update hidden variable x accrding to the currect mode
             if self.mode == 'cont':
@@ -832,18 +857,18 @@ class HORNN(nn.Module):
             elif self.mode == 'disc':
                 x = rec_x
 
-            trajectories[t] = x
+            traj[t] = x
 
-        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
-        trajectories = trajectories.permute(1, 0, 2)
+        # need traj to be (batch_size, time_steps, hidden_size) dim:
+        traj = traj.transpose(0,1).contiguous()
 
         # get final output
         if self.form == 'voltage':
-            output = self.w_out(trajectories)
+            output = self.w_out(traj)
         elif self.form == 'rate':
-            output = self.w_out(self.output_nonlinearity(trajectories))
+            output = self.w_out(self.output_nonlinearity(traj))
 
-        return output, x, trajectories
+        return output, x, traj
 
 
 
@@ -909,38 +934,49 @@ class Low_Rank_HORNN(nn.Module):
     def forward(self, u, x0):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
-        # trajectories (batch_size, time_steps, hidden_size)
-        DEVICE = next(self.parameters()).device
-        b_size, seq_length = u.size(0), u.size(1)
-        hid = self.hidden_dim
-        noise = torch.randn(seq_length, b_size, hid, device=DEVICE)
+        # traj (batch_size, time_steps, hidden_size)
+        DEVICE = u.device
+        B, T, _ = u.shape
+        H = self.hidden_dim
 
-        trajectories = torch.empty((seq_length, b_size, hid), device=DEVICE)
+        u_tbI = u.transpose(0,1).contiguous()
+        noise = torch.randn(T, B, H, device=DEVICE)
+
+        traj = torch.empty((T, B, H), device=DEVICE)
         if x0 is None:
-            x0 = torch.zeros((b_size, hid), device=DEVICE)
+            x0 = torch.zeros((B, H), device=DEVICE)
         x = x0
 
-        for t, u_t in enumerate(u.permute(1, 0, 2)):
+        scale_rnn = (1.0 / H) if self.mode == "cont" else 1.0
+        scale_tbrnn = (1.0 / (H**2)) if self.mode == "cont" else 1.0
+
+
+        for t in range(T):
+            u_t = u_tbI[t]
             if self.form == 'voltage':
                 r = x
             elif self.form == 'rate':
                 r = self.nonlinearity(x)
 
             # calculating: input weight
-            input_I = self.w_in(u_t)
+            input_part = self.w_in(u_t)
 
-            hidden_W_rnn = r @ self.N_rnn @ self.M_rnn.T / (self.hidden_dim if self.mode == 'cont' else 1.0)
-            hidden_W_tbrnn = ((r @ self.M_tbrnn) * (r @ self.N_tbrnn)) @ self.L_tbrnn.T / (self.hidden_dim**2 if self.mode == 'cont' else 1.0)
+            recurrent_part_rnn = r @ self.N_rnn @ self.M_rnn.T * scale_rnn
+
+            rM = r @ self.M_tbrnn                      # (B, R)
+            rN = r @ self.N_tbrnn                       # (B, R)
+            recurrent_part_tbrnn = (rM * rN) @ self.L_tbrnn.T              # (B, H)
+            recurrent_part_tbrnn = recurrent_part_tbrnn * scale_tbrnn
 
             if self.adv: # if setup is adversarial
-                hidden_W = torch.sigmoid(self.alpha) * hidden_W_rnn + (1-torch.sigmoid(self.alpha)) * hidden_W_tbrnn
+                recurrent_part = torch.sigmoid(self.alpha) * recurrent_part_rnn + (1-torch.sigmoid(self.alpha)) * recurrent_part_tbrnn
             else:
-                hidden_W = hidden_W_rnn + hidden_W_tbrnn
+                recurrent_part = recurrent_part_rnn + recurrent_part_tbrnn
 
             if self.form == 'voltage':
-                rec_x = self.nonlinearity(hidden_W + input_I)
+                rec_x = self.nonlinearity(recurrent_part + input_part)
             elif self.form == 'rate':
-                rec_x = hidden_W + input_I
+                rec_x = input_part + input_part
 
             # update hidden variable x accrding to the currect mode
             if self.mode == 'cont':
@@ -948,18 +984,18 @@ class Low_Rank_HORNN(nn.Module):
             elif self.mode == 'disc':
                 x = rec_x
 
-            trajectories[t] = x
+            traj[t] = x
 
-        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
-        trajectories = trajectories.permute(1, 0, 2)
+        # need traj to be (batch_size, time_steps, hidden_size) dim:
+        traj = traj.transpose(0,1).contiguous()
 
         # get final output
         if self.form == 'voltage':
-            output = self.w_out(trajectories)
+            output = self.w_out(traj)
         elif self.form == 'rate':
-            output = self.w_out(self.output_nonlinearity(trajectories))
+            output = self.w_out(self.output_nonlinearity(traj))
 
-        return output, x, trajectories
+        return output, x, traj
 
     def lr_to_tensor(self):
         M = self.M_rnn.T.cpu().detach()
