@@ -870,17 +870,15 @@ class Low_Rank_HORNN(nn.Module):
             self.w_in = w_in
         else:
             self.w_in = nn.Linear(input_size, hidden_dim, bias = Win_bias)
-            #nn.init.xavier_uniform_(self.w_in.weight)
-            nn.init.normal_(self.w_in.weight)
-            if Win_bias is not None:
+            nn.init.xavier_uniform_(self.w_in.weight)
+            if Win_bias:
                 nn.init.zeros_(self.w_in.bias)
 
         if w_out is not None:
             self.w_out = w_out
         else:
             self.w_out = nn.Linear(hidden_dim, output_size, bias = Wout_bias)
-            #nn.init.xavier_uniform_(self.w_out.weight)
-            nn.init.normal_(self.w_out.weight,std=4.)
+            nn.init.xavier_uniform_(self.w_out.weight)
 
 
         self.nonlinearity = nonlinearity
