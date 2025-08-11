@@ -89,13 +89,13 @@ def train(model,dataset,epochs,optimizer,criterion,
 
         # display loss and predictions
         with torch.no_grad():
-            input, target, hidden, mask = dataset.tensors
+            for input, target, hidden, mask in DataLoader(dataset, len(dataset)): None
             prediction,_ ,_ = model.forward(input, hidden)
             train_loss = criterion(prediction[mask], target[mask])
             losses.append(train_loss.cpu().data.item())
 
             if valid_set is not None:
-                input, target, hidden, mask = valid_set.tensors
+                for input, target, hidden, mask in DataLoader(valid_set, len(valid_set)): None
                 prediction,_ ,_ = model.forward(input, hidden)
                 valid_loss = criterion(prediction[mask], target[mask])
                 check_loss = valid_loss
@@ -129,7 +129,6 @@ def train(model,dataset,epochs,optimizer,criterion,
         model.load_state_dict(model.best_model)
 
     with torch.no_grad():
-        input, target, hidden, mask = dataset.tensors
         prediction, _ , _ = model.forward(input, hidden)
         loss = criterion(prediction[mask], target[mask])
         print(f'10/10 --- train loss = {train_loss.cpu().data:.6f}, best {best_set} loss = {best_loss.cpu().data:.6f}')

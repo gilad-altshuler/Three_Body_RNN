@@ -68,7 +68,7 @@ def generate_mante_data_from_conditions(coherences_A, coherences_B, contexts, st
     return inputs, targets, mask
 
 def generate_data(DATA_DIR, monkey = 'A', DEVICE="cpu"):
-    
+
     assert monkey in ['A', 'F'], "Monkey must be 'A' or 'F'"
     setup()
 
@@ -95,7 +95,7 @@ def generate_data(DATA_DIR, monkey = 'A', DEVICE="cpu"):
     n_test = nconds - n_valid - n_train
 
     # input, target, i_hidden, mask
-    dataset = TensorDataset(torch.from_numpy(input).to(DEVICE,dtype=torch.float32),
+    dataset = TensorDataset(input,
                             torch.from_numpy(target).to(DEVICE,dtype=torch.float32),
                             torch.zeros(nconds,n_neurons).to(DEVICE,dtype=torch.float32),
                             mask)
