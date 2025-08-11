@@ -144,10 +144,10 @@ def LINT_method(teacher,student_class,input,target,start_rank=1,end_rank=6,epoch
         end_factor = lr[1] / lr[0]
         optimizer = torch.optim.Adam(lr_student.parameters(), lr=lr[0])
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=end_factor,total_iters=sched_epochs)
-
-        _ = train(lr_student,input,teacher_hidden,epochs,optimizer,criterion,
-                        scheduler=scheduler,mask_train=None,batch_size=batch_size,
-                        hidden=None,clip_gradient=None,keep_best=True,plot=False)
+        dataset = (input,teacher_hidden)
+        _ = train(lr_student,dataset,epochs,optimizer,criterion,
+                  scheduler=scheduler,batch_size=batch_size,clip_gradient=None,keep_best=True,plot=False)
+        
         lr_student.output_nonlinearity = teacher.output_nonlinearity
         lr_student.w_out = copy.deepcopy(teacher.w_out)
         

@@ -24,6 +24,7 @@ def train_teacher_student(run_name, t_rank, ranks=[1,6], data_size=128, hidden_d
     task = run_name.split('/')[0]
     generate_data = getattr(importlib.import_module(f'tasks.{task}'), 'generate_data')
     input,target = generate_data(data_size, T, input_size, DEVICE=DEVICE)
+    dataset = (input, target)
 
     criterion = nn.MSELoss().to(DEVICE)
     end_factor = lr[1] / lr[0]
@@ -52,9 +53,9 @@ def train_teacher_student(run_name, t_rank, ranks=[1,6], data_size=128, hidden_d
 
             optimizer = torch.optim.Adam(lr_model.parameters(), lr=lr[0])
             scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=end_factor, total_iters=epochs)
-            last_loss = train(lr_model, input, target, epochs, optimizer, criterion,
-                              scheduler=scheduler, mask_train=None, batch_size=data_size,
-                              hidden=None, clip_gradient=None, keep_best=True, plot=False)[-1]
+            
+            last_loss = train(lr_model, dataset, epochs, optimizer, criterion,
+                              scheduler=scheduler, batch_size=data_size, clip_gradient=None, keep_best=True, plot=False)[-1]
             if last_loss <= eps:
                 teachers[i] = lr_model
                 torch.save(lr_model.state_dict(), run_dir / f"{name}_teacher.pth")

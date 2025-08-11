@@ -23,8 +23,8 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
     input_size = output_size = hidden_dim = N
     criterion = torch.nn.MSELoss()
     scheduler = None
-    hidden=x_half[:,0,:]
     w_out = torch.nn.Identity()
+    dataset = (input[:,1:,:], x_half[:,1:,:], x_half[:,0,:])
 
     print("Training student models...")
     # training student models
@@ -44,9 +44,8 @@ def train_multifate_inference(run_name, data_size, N, T, epochs, lr):
 
         optimizer = torch.optim.Adam(student.parameters(), lr=lr)
 
-        _ = train(student, input[:,1:,:], x_half[:,1:,:], epochs, optimizer, criterion,
-                  scheduler=scheduler, mask_train=None, batch_size=data_size,
-                  hidden=hidden, clip_gradient=None, keep_best=True, plot=False)
+        _ = train(student, dataset, epochs, optimizer, criterion,
+                  scheduler=scheduler, batch_size=data_size, clip_gradient=None, keep_best=True, plot=False)
 
         torch.save(student.state_dict(), run_dir / f"{model_name}_student.pth")
 

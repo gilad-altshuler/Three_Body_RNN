@@ -19,6 +19,7 @@ def train_solution_space(run_name, rank=1, data_size=128, hidden_dim=30, input_s
         run_dir.mkdir(parents=True)
 
     input,target = generate_data(data_size, T, input_size, DEVICE=DEVICE)
+    dataset = (input, target)
 
     lr_rnn = Low_Rank_RNN(input_size, output_size, hidden_dim, rank=rank, mode='cont', form='rate', task="K_Bit_Flipflop_task",
                             noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False).to(DEVICE)
@@ -35,9 +36,8 @@ def train_solution_space(run_name, rank=1, data_size=128, hidden_dim=30, input_s
     optimizer = torch.optim.Adam(lr_rnn.parameters(), lr=1e-02)
     scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=0.5,total_iters=epochs)
 
-    _ = train(lr_rnn,input,target,epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,
-              hidden=None,clip_gradient=None,keep_best=True,plot=False)
+    _ = train(lr_rnn,dataset,epochs,optimizer,criterion,
+              scheduler=scheduler,batch_size=data_size,clip_gradient=None,keep_best=True,plot=False)
 
     ############### train tbrnn with warmup ###############
     lr_tbrnn.w_in = copy.deepcopy(lr_rnn.w_in)
@@ -46,9 +46,8 @@ def train_solution_space(run_name, rank=1, data_size=128, hidden_dim=30, input_s
     lr_tbrnn.w_out.weight.requires_grad = False
     
     optimizer = torch.optim.Adam(lr_tbrnn.parameters(), lr=5e-03)
-    _ = train(lr_tbrnn,input,target,epochs//2,optimizer,criterion,
-              scheduler=None,mask_train=None,batch_size=data_size,
-              hidden=None,clip_gradient=None,keep_best=True,plot=False)
+    _ = train(lr_tbrnn,dataset,epochs//2,optimizer,criterion,
+              scheduler=None,batch_size=data_size,clip_gradient=None,keep_best=True,plot=False)
     
     # changing so the w_in and w_out are trainable
     lr_tbrnn.w_in.weight.requires_grad = True
@@ -56,9 +55,8 @@ def train_solution_space(run_name, rank=1, data_size=128, hidden_dim=30, input_s
 
     # continue training tbrnn
     scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=0.5,total_iters=epochs)
-    _ = train(lr_tbrnn,input,target,epochs//2,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,
-              hidden=None,clip_gradient=None,keep_best=True,plot=False)
+    _ = train(lr_tbrnn,dataset,epochs//2,optimizer,criterion,
+              scheduler=None,batch_size=data_size,clip_gradient=None,keep_best=True,plot=False)
 
     ############### train tbrnn with same w_in and w_out ###############
 
@@ -70,18 +68,16 @@ def train_solution_space(run_name, rank=1, data_size=128, hidden_dim=30, input_s
     lr_tbrnn_same.w_in.weight.requires_grad = False
     lr_tbrnn_same.w_out.weight.requires_grad = False
 
-    _ = train(lr_tbrnn_same,input,target,epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,
-              hidden=None,clip_gradient=None,keep_best=True,plot=False)
+    _ = train(lr_tbrnn_same,dataset,epochs,optimizer,criterion,
+              scheduler=None,batch_size=data_size,clip_gradient=None,keep_best=True,plot=False)
 
-    ############### train gru with same w_in and w_out ###############
+    ############### train gru ###############
 
     optimizer = torch.optim.Adam(lr_gru.parameters(), lr=1e-02)
     scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=0.5,total_iters=epochs)
 
-    _ = train(lr_gru,input,target,epochs,optimizer,criterion,
-              scheduler=scheduler,mask_train=None,batch_size=data_size,
-              hidden=None,clip_gradient=None,keep_best=True,plot=False)
+    _ = train(lr_gru,dataset,epochs,optimizer,criterion,
+              scheduler=None,batch_size=data_size,clip_gradient=None,keep_best=True,plot=False)
 
     # train tbrnn
     torch.save(lr_rnn.state_dict(), run_dir / f"rank_{rank}_RNN.pth")
