@@ -22,9 +22,28 @@ def get_model_str(model_class):
             return keyword
     return None  # Return None if none of the keywords are found
 
-def train(model,input,target,epochs,optimizer,criterion,
-          scheduler=None,mask_train=None,batch_size=128,hidden=None,
-          clip_gradient=None,keep_best=True,plot=False):
+def make_dataset(model, dataset, DEVICE):
+    if dataset is not None and not isinstance(dataset, TensorDataset):
+        assert len(dataset) >= 2, "Dataset must be a TensorDataset with input and target tensors."
+        assert len(dataset) <= 4, "Dataset can have at most 4 tensors: input, target, hidden, mask."
+        input, target = dataset[0], dataset[1]
+        B,T,_ = input.shape
+        N = model.hidden_dim
+        hidden = None
+        mask = None
+        if len(dataset) >= 3:
+            hidden = dataset[2]
+        if len(dataset) == 4:
+            mask = dataset[3]
+        if hidden is None:
+            hidden = torch.zeros(B,N).to(DEVICE)
+        if mask is None:
+            mask = torch.ones(T,device=DEVICE).to(DEVICE, dtype=torch.bool)
+        dataset = TensorDataset(input,target,hidden,mask)
+    return dataset
+
+def train(model,dataset,epochs,optimizer,criterion,
+          valid_set=None,scheduler=None,batch_size=128,clip_gradient=None,keep_best=True,plot=False):
     """ 
     Train the model on the provided input and target data.
     :param model: The model to be trained.
@@ -42,29 +61,23 @@ def train(model,input,target,epochs,optimizer,criterion,
     :param plot: Whether to visualize the training progress.
     :return: List of losses recorded during training.
     """
-    B,T,_ = input.shape
-    N = model.hidden_dim
     DEVICE = next(model.parameters()).device
-    if hidden is None:
-        hidden = torch.zeros(B,N).to(DEVICE)
-    dataset = TensorDataset(input,target,hidden)
+    assert dataset is not None, "Dataset must be provided for training."
+    dataset = make_dataset(model, dataset, DEVICE)
+    valid_set = make_dataset(model, valid_set, DEVICE)
+
     losses = []
     best_loss = torch.tensor(float('inf')).to(DEVICE)
     last_epoch_best_loss = best_loss
     eps = 1e-4
 
-    if mask_train is not None:
-        mask_t = mask_train[0,:,0]
-    else:
-        mask_t = torch.ones(T,device=DEVICE)
-
     for epoch in tqdm(range(epochs)):
         dataloader = DataLoader(dataset,batch_size,shuffle=True)
-        for X, Y, b_hidden in dataloader:
+        for input, target, hidden, mask in dataloader:
             optimizer.zero_grad()
-            prediction, _, _ = model.forward(X, b_hidden)
+            prediction, _, _ = model.forward(input, hidden)
             ### calculate the loss
-            loss = criterion(prediction.transpose(0,1)[mask_t==1].transpose(0,1), Y.transpose(0,1)[mask_t==1].transpose(0,1))
+            loss = criterion(prediction[mask], target[mask])
             ### perform backprop and update weights
             loss.backward()
             if clip_gradient is not None:
@@ -72,25 +85,36 @@ def train(model,input,target,epochs,optimizer,criterion,
             optimizer.step()
         if scheduler is not None:
             scheduler.step()
-
         torch.cuda.empty_cache()
+
         # display loss and predictions
         with torch.no_grad():
+            input, target, hidden, mask = dataset.tensors
             prediction,_ ,_ = model.forward(input, hidden)
-            loss = criterion(prediction.transpose(0,1)[mask_t==1].transpose(0,1), target.transpose(0,1)[mask_t==1].transpose(0,1))
-            losses.append(loss.cpu().data.item())
-            if best_loss > loss:
-                model.best_model = copy.deepcopy(model.state_dict())
-                best_loss = loss
+            train_loss = criterion(prediction[mask], target[mask])
+            losses.append(train_loss.cpu().data.item())
 
-            if loss < eps:
-                print('Early stopping at epoch {} with loss {:.4f}'.format(epoch, loss.cpu().data.item()))
+            if valid_set is not None:
+                input, target, hidden, mask = valid_set.tensors
+                prediction,_ ,_ = model.forward(input, hidden)
+                valid_loss = criterion(prediction[mask], target[mask])
+                check_loss = valid_loss
+                best_set = "validation"
+            else:
+                check_loss = train_loss
+                best_set = "train"
+
+            if best_loss > check_loss:
+                model.best_model = copy.deepcopy(model.state_dict())
+                best_loss = check_loss
+
+            if train_loss < eps:
+                print(f'Early stopping at epoch {epoch} with train loss {train_loss.cpu().data.item():.4f}')
                 break
 
         if epoch % (epochs/10) == 0:
-            print(int(epoch / (epochs / 10)),
-                    '/10 --- loss = {:.6f}, best = {:.6f}'.format(loss.cpu().data, best_loss.cpu().data))
-            
+            print(f'{int(epoch / (epochs / 10))}/10 --- train loss = {train_loss.cpu().data:.6f}, best {best_set} loss = {best_loss.cpu().data:.6f}')
+
             if last_epoch_best_loss - best_loss < eps:
                 print('No improvement in the last 10%, stopping training.')
                 break
@@ -105,9 +129,10 @@ def train(model,input,target,epochs,optimizer,criterion,
         model.load_state_dict(model.best_model)
 
     with torch.no_grad():
+        input, target, hidden, mask = dataset.tensors
         prediction, _ , _ = model.forward(input, hidden)
-        loss = criterion(prediction.transpose(0,1)[mask_t==1].transpose(0,1), target.transpose(0,1)[mask_t==1].transpose(0,1)).cpu()
-        print('Loss: ', loss.data.item())
+        loss = criterion(prediction[mask], target[mask])
+        print(f'10/10 --- train loss = {train_loss.cpu().data:.6f}, best {best_set} loss = {best_loss.cpu().data:.6f}')
 
     return losses
 
