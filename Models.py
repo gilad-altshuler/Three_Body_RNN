@@ -230,7 +230,7 @@ class TBRNN(nn.Module):
 
             traj[t] = x
 
-        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
+        # need traj to be (batch_size, time_steps, hidden_size) dim:
         traj = traj.transpose(0,1).contiguous()
 
         # get final output
@@ -350,7 +350,7 @@ class Low_Rank_TBRNN(nn.Module):
         
             traj[t] = x
 
-        # need trajectory to be (batch_size, time_steps, hidden_size) dim:
+        # need traj to be (batch_size, time_steps, hidden_size) dim:
         traj = traj.transpose(0,1).contiguous()
 
         # get final output
@@ -495,8 +495,8 @@ class RNN(nn.Module):
 
             traj[t] = x
 
-        # need trajectories to be (batch_size, time_steps, hidden_size) dim:
-        traj = traj.permute(1, 0, 2)
+        # need traj to be (batch_size, time_steps, hidden_size) dim:
+        traj = traj.transpose(0,1).contiguous()
 
         # get final output
         if self.form == 'voltage':
@@ -566,7 +566,7 @@ class Low_Rank_RNN(nn.Module):
     def forward(self, u, x0):
         # u (batch_size, seq_length, input_size)
         # x0 (batch_size, hidden_dim)
-        # trajectories (batch_size, time_steps, hidden_size)
+        # traj (batch_size, time_steps, hidden_size)
         DEVICE = u.device
         B, T, _ = u.shape
         H = self.hidden_dim
@@ -606,7 +606,7 @@ class Low_Rank_RNN(nn.Module):
             traj[t] = x
 
         # need traj to be (batch_size, time_steps, hidden_size) dim:
-        traj = traj.permute(1, 0, 2)
+        traj = traj.transpose(0,1).contiguous()
 
         # get final output
         if self.form == 'voltage':
@@ -744,7 +744,7 @@ class Low_Rank_GRU(nn.Module):
             traj[t] = x
 
         # need traj to be (batch_size, time_steps, hidden_size) dim:
-        traj = traj.transpose(1, 0).contiguous()
+        traj = traj.transpose(0,1).contiguous()
 
         # get final output
         output = self.w_out(traj)
