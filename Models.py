@@ -38,7 +38,7 @@ def make_dataset(model, dataset, DEVICE):
         if hidden is None:
             hidden = torch.zeros(B,N).to(DEVICE)
         if mask is None:
-            mask = torch.ones(T,device=DEVICE).to(DEVICE, dtype=torch.bool)
+            mask = torch.ones((B,T,N),device=DEVICE).to(DEVICE, dtype=torch.bool)
         dataset = TensorDataset(input,target,hidden,mask)
     return dataset
 

@@ -18,7 +18,7 @@ def train_mante_inference(run_name, ranks, epochs, lr):
     # load mante data
     train_dataset, valid_dataset, test_dataset = generate_data(DATA_ROOT, DEVICE=DEVICE)
     input,target,hidden,_ = train_dataset.dataset.tensors
-    train_data_size = len(train_dataset.indices)
+
     # set up training parameters
     criterion = torch.nn.MSELoss()
 
@@ -43,8 +43,8 @@ def train_mante_inference(run_name, ranks, epochs, lr):
     scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=lr[1]/lr[0],total_iters=epochs)
 
     _ = train(student, train_dataset, epochs, optimizer, criterion,
-                valid_set=valid_dataset, scheduler=scheduler, batch_size=train_data_size,
-                clip_gradient=None, keep_best=True, plot=False)
+                valid_set=valid_dataset, scheduler=scheduler, batch_size=len(train_dataset),
+                clip_gradient=1, keep_best=True, plot=False)
 
     torch.save(student.state_dict(), run_dir / f"r_1_r_1_hornn_student.pth")
 
@@ -59,8 +59,8 @@ def train_mante_inference(run_name, ranks, epochs, lr):
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=lr[1]/lr[0],total_iters=epochs)
 
         _ = train(student, train_dataset, epochs, optimizer, criterion,
-                  valid_set=valid_dataset, scheduler=scheduler, batch_size=train_data_size,
-                  clip_gradient=None, keep_best=True, plot=False)
+                  valid_set=valid_dataset, scheduler=scheduler, batch_size=len(train_dataset),
+                  clip_gradient=1, keep_best=True, plot=False)
 
         torch.save(student.state_dict(), run_dir / f"r_{rank}_rnn_student.pth")
 
