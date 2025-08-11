@@ -3,7 +3,7 @@ import copy
 import numpy as np
 import torch
 from torch import nn
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import TensorDataset, Subset, DataLoader
 from utils import project_L_orthogonal_to_I, gram_schmidt
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -23,7 +23,7 @@ def get_model_str(model_class):
     return None  # Return None if none of the keywords are found
 
 def make_dataset(model, dataset, DEVICE):
-    if dataset is not None and not isinstance(dataset, TensorDataset):
+    if dataset is not None and not isinstance(dataset, (Subset,TensorDataset)):
         assert len(dataset) >= 2, "Dataset must be a TensorDataset with input and target tensors."
         assert len(dataset) <= 4, "Dataset can have at most 4 tensors: input, target, hidden, mask."
         input, target = dataset[0], dataset[1]
