@@ -590,12 +590,12 @@ class Low_Rank_RNN(nn.Module):
 
             # calculating: input weight
             input_part = self.w_in(u_t)
-            hidden_part = r @ self.N @ self.M.T * scale
+            recurrent_part = r @ self.N @ self.M.T * scale
 
             if self.form == 'voltage':
-                rec_x = self.nonlinearity(hidden_part + input_part)
+                rec_x = self.nonlinearity(recurrent_part + input_part)
             elif self.form == 'rate':
-                rec_x = hidden_part + input_part
+                rec_x = recurrent_part + input_part
 
             # update hidden variable x accrding to the currect mode
             if self.mode == 'cont':
@@ -1003,7 +1003,7 @@ class Low_Rank_HORNN(nn.Module):
             if self.form == 'voltage':
                 rec_x = self.nonlinearity(recurrent_part + input_part)
             elif self.form == 'rate':
-                rec_x = input_part + input_part
+                rec_x = recurrent_part + input_part
 
             # update hidden variable x accrding to the currect mode
             if self.mode == 'cont':
