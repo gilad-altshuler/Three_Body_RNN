@@ -68,7 +68,8 @@ def train(model,dataset,epochs,optimizer,criterion,
 
     losses = []
     best_loss = torch.tensor(float('inf')).to(DEVICE)
-    last_epoch_best_loss = best_loss
+    train_best_loss = torch.tensor(float('inf')).to(DEVICE)
+    last_epoch_train_best_loss = train_best_loss
     eps = 1e-4
 
     for epoch in tqdm(range(epochs)):
@@ -107,6 +108,9 @@ def train(model,dataset,epochs,optimizer,criterion,
             if best_loss > check_loss:
                 model.best_model = copy.deepcopy(model.state_dict())
                 best_loss = check_loss
+            
+            if train_best_loss > train_loss:
+                train_best_loss = train_loss
 
             if train_loss < eps:
                 print(f'Early stopping at epoch {epoch} with train loss {train_loss.cpu().data.item():.4f}')
@@ -115,11 +119,11 @@ def train(model,dataset,epochs,optimizer,criterion,
         if epoch % (epochs/10) == 0:
             print(f'{int(epoch / (epochs / 10))}/10 --- train loss = {train_loss.cpu().data:.6f}, best {best_set} loss = {best_loss.cpu().data:.6f}')
 
-            if last_epoch_best_loss - best_loss < eps:
+            if last_epoch_train_best_loss - train_best_loss < eps:
                 print('No improvement in the last 10%, stopping training.')
                 break
             else:
-                last_epoch_best_loss = best_loss
+                last_epoch_train_best_loss = train_best_loss
 
             if plot:
                 plot_func = getattr(importlib.import_module(f"tasks.{model.task}"), 'plot')

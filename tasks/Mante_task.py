@@ -102,7 +102,3 @@ def generate_data(DATA_DIR, monkey = 'A', DEVICE="cpu"):
     return random_split(dataset, [n_train, n_valid, n_test],
                         generator=torch.Generator().manual_seed(0))
     
-
-
-    # train_dataset, valid_dataset, test_dataset
-    # mask_t = mask_train[0,:,0]
