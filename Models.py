@@ -128,10 +128,7 @@ def train(model,dataset,epochs,optimizer,criterion,
     if keep_best:
         model.load_state_dict(model.best_model)
 
-    with torch.no_grad():
-        prediction, _ , _ = model.forward(input, hidden)
-        loss = criterion(prediction[mask], target[mask])
-        print(f'10/10 --- train loss = {train_loss.cpu().data:.6f}, best {best_set} loss = {best_loss.cpu().data:.6f}')
+    print(f'10/10 --- train loss = {train_loss.cpu().data:.6f}, best {best_set} loss = {best_loss.cpu().data:.6f}')
 
     return losses
 
