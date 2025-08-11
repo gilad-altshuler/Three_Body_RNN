@@ -1,57 +1,93 @@
 """
-Code is based on:
+Code is adapted from:
 Adrian Valente, May 2022.
 
 Train low-rank networks on the Mante data.
 Low-rank networks are pre-initialized with connectivity from a previously trained full-rank.
 """
 
-from low_rank_rnns import mante
 import pandas as pd
 import torch
 from torch.utils.data import random_split, TensorDataset
 import numpy as np
+from math import floor
 
-# from low_rank_rnns import mante, stats, data_loader_mante as dlm, helpers
+## NEW SETUP: the fitted network is let free for the first 350 ms (while receiving contextual signals).
+deltaT = 5
+fixation_duration = 0
+ctx_only_pre_duration = 350
+stimulus_duration = 650   # counting first step
+delay_duration = 80
+decision_duration = 20
 
-# smoothing_width = 50
 
-# hidden_neurons = 0
-# n_epochs = 2
-# lr = 5e-4
-# load_modnum = 22  # Numbering of the full-rank fitted network
-def generate_data(DATA_DIR, monkey = 'A', bin_width = 5, DEVICE="cpu"):
+SCALE = 1
+SCALE_CTX = 1
+std_default = 1e-1
+# decision targets
+lo = -1
+hi = 1
+
+
+def setup():
+    """
+    Call this function whenever changing one of the global task variables (modifies other global variables)
+    """
+    global fixation_duration_discrete, stimulus_duration_discrete, ctx_only_pre_duration_discrete, \
+        delay_duration_discrete, decision_duration_discrete, total_duration, stim_begin, stim_end, response_begin
+    fixation_duration_discrete = floor(fixation_duration / deltaT)
+    ctx_only_pre_duration_discrete = floor(ctx_only_pre_duration / deltaT)
+    stimulus_duration_discrete = floor(stimulus_duration / deltaT)
+    delay_duration_discrete = floor(delay_duration / deltaT)
+    decision_duration_discrete = floor(decision_duration / deltaT)
+
+    stim_begin = fixation_duration_discrete + ctx_only_pre_duration_discrete
+    stim_end = stim_begin + stimulus_duration_discrete
+    response_begin = stim_end + delay_duration_discrete
+    total_duration = fixation_duration_discrete + stimulus_duration_discrete + delay_duration_discrete + \
+                     ctx_only_pre_duration_discrete + decision_duration_discrete
+
+def generate_mante_data_from_conditions(coherences_A, coherences_B, contexts, std=0):
+    num_trials = coherences_A.shape[0]
+    inputs_sensory = std * torch.randn((num_trials, total_duration, 2), dtype=torch.float32)
+    inputs_context = torch.zeros((num_trials, total_duration, 2))
+    inputs = torch.cat([inputs_sensory, inputs_context], dim=2)
+    targets = torch.zeros((num_trials, total_duration, 1), dtype=torch.float32)
+    mask = torch.zeros((num_trials, total_duration, 1), dtype=torch.float32)
+
+    for i in range(num_trials):
+        inputs[i, stim_begin:stim_end, 0] += coherences_A[i] * SCALE
+        inputs[i, stim_begin:stim_end, 1] += coherences_B[i] * SCALE
+        if contexts[i] == 1:
+            inputs[i, fixation_duration_discrete:response_begin, 2] = 1. * SCALE_CTX
+            targets[i, response_begin:] = hi if coherences_A[i] > 0 else lo
+        elif contexts[i] == -1:
+            inputs[i, fixation_duration_discrete:response_begin, 3] = 1. * SCALE_CTX
+            targets[i, response_begin:] = hi if coherences_B[i] > 0 else lo
+        mask[i, response_begin:, 0] = 1
+    return inputs, targets, mask
+
+def generate_data(DATA_DIR, monkey = 'A', DEVICE="cpu"):
+    
     assert monkey in ['A', 'F'], "Monkey must be 'A' or 'F'"
+    setup()
 
     modnum = 24  # Number of the low-rank fitted networks
 
-    # Load preprocessed condition-averaged data (3d tensor, see 2112_mante_monkey_fits.ipynb)
+    # Load preprocessed condition-averaged data
     conditions = pd.read_csv(DATA_DIR / f'conditions_monkey{monkey}.csv')
     X = np.load(DATA_DIR / f'X_cent_monkey{monkey}.npy')
     nconds, ntime, n_neurons = X.shape
     print(f"Training on monkey {monkey}, version {modnum}")
     print(X.shape)
 
-    # Prepare pseudo-inputs
-    ## NEW SETUP: the fitted network is let free for the first 350 ms (while receiving contextual signals).
-    mante.fixation_duration = 0
-    mante.ctx_only_pre_duration = 350
-    mante.stimulus_duration = 650   # counting first step
-    mante.delay_duration = 80
-    mante.decision_duration = 20
-
-
-    mante.deltaT = bin_width
-    mante.SCALE = 1
-    mante.SCALE_CTX = 1
-    mante.setup()
     correct_trials = conditions.correct == 1
-    input, _, _ = mante.generate_mante_data_from_conditions(conditions[correct_trials]['stim_dir'].to_numpy(),
+    input, _, _ = generate_mante_data_from_conditions(conditions[correct_trials]['stim_dir'].to_numpy(),
                                                             conditions[correct_trials]['stim_col'].to_numpy(),
                                                             conditions[correct_trials]['context'].to_numpy())
-    target = np.concatenate([np.zeros((nconds, mante.ctx_only_pre_duration_discrete, n_neurons)), X], axis=1)
-    mask = torch.ones((nconds, mante.ctx_only_pre_duration_discrete + ntime, n_neurons)).to(DEVICE,dtype=torch.bool)
-    mask[:, :mante.ctx_only_pre_duration_discrete, :] = False
+    target = np.concatenate([np.zeros((nconds, ctx_only_pre_duration_discrete, n_neurons)), X], axis=1)
+    mask = torch.ones((nconds, ctx_only_pre_duration_discrete + ntime, n_neurons)).to(DEVICE,dtype=torch.bool)
+    mask[:, :ctx_only_pre_duration_discrete, :] = False
 
     # Prepare training set, initial states for trajectories...
     n_train = int(0.8 * nconds)
