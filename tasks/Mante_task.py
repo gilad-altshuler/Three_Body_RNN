@@ -114,11 +114,13 @@ def evaluate(model, dataset, r2_mode='per_batch', r2_all=False):
     """
     from torch.utils.data import DataLoader
     from sklearn.metrics import r2_score
-    for input, target, hidden, _ in DataLoader(dataset, len(dataset)): None
+    for input, target, hidden, mask in DataLoader(dataset, len(dataset)): None
     B,T,N = target.shape
     model.eval()
     with torch.no_grad():
         trajectory = model(input, hidden)[0]
+        trajectory = trajectory[mask].view(B,-1,N)  # Apply mask to trajectory
+        target = target[mask].view(B,-1,N)
         if r2_mode == 'per_batch':
             r2 = [r2_score(target[i].detach().cpu().numpy(), trajectory[i].detach().cpu().numpy()) for i in range(B)]
         elif r2_mode == 'per_time_step':
