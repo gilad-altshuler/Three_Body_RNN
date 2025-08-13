@@ -33,14 +33,9 @@ r2s = {
     for m in modes
 }
 
-per_neuron_r2s = copy.deepcopy(r2s)
-
 for run in range(1,runs+1):
     i = run-1
-    if run==25:
-        continue
-    if run>25:
-        i=i-1
+
     print(f"Reading stats of run: {run:03}")
 
     train_set = torch.load(RUN_DIR / f"{run:03}" / "train_set.pth", map_location=DEVICE, weights_only=False)
@@ -63,7 +58,6 @@ for run in range(1,runs+1):
 
     for m in modes:
         r2s[m]['hornn'][i] = evaluate(student, locals()[f"{m}_set"], r2_mode='per_batch')
-        per_neuron_r2s[m]['hornn'][i] = evaluate(student, locals()[f"{m}_set"], r2_mode='per_neuron')
 
     for rank in range(1, ranks+1):
         # define teachers
@@ -80,22 +74,16 @@ for run in range(1,runs+1):
         # evaluate rnns
         for m in modes:
             r2s[m]['rnn'][rank-1][i] = evaluate(student, locals()[f"{m}_set"], r2_mode='per_batch')
-            per_neuron_r2s[m]['rnn'][rank-1][i] = evaluate(student, locals()[f"{m}_set"], r2_mode='per_neuron')
 
 models = ['rnn','hornn']
 for model in models:
     for m in modes:
         r2s[m][model] = np.array(r2s[m][model])
-        per_neuron_r2s[m][model] = np.array(per_neuron_r2s[m][model])
-
 
 if not os.path.isdir(DATA_DIR):
     DATA_DIR.mkdir(parents=True)
 
 with open(DATA_DIR / "r2s.pkl", "wb") as f:
     pickle.dump(r2s, f)
-
-with open(DATA_DIR / "per_neuron_r2s.pkl", "wb") as f:
-    pickle.dump(per_neuron_r2s, f)
 
 print("Done. All data saved to:", DATA_DIR)
