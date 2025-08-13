@@ -119,17 +119,16 @@ def evaluate(model, dataset, r2_mode='per_batch', r2_all=False):
     model.eval()
     with torch.no_grad():
         trajectory = model(input, hidden)[0]
-        trajectory = trajectory[mask].view(B,-1,N)  # Apply mask to trajectory
-        target = target[mask].view(B,-1,N)
+        trajectory = trajectory[mask].view(B,-1,N).detach().cpu().numpy()  # Apply mask to trajectory
+        target = target[mask].view(B,-1,N).detach().cpu().numpy()
         if r2_mode == 'per_batch':
-            r2 = [r2_score(target[i].detach().cpu().numpy(), trajectory[i].detach().cpu().numpy()) for i in range(B)]
+            return r2_score(target.ravel(), trajectory.ravel())
         elif r2_mode == 'per_time_step':
-            r2 = [r2_score(target[:,i].detach().cpu().numpy(), trajectory[:,i].detach().cpu().numpy()) for i in range(T)]
+            r2 = [r2_score(target[:,i], trajectory[:,i]) for i in range(T)]
         elif r2_mode == 'per_neuron':
-            r2 = [r2_score(target[:,:,i].detach().cpu().numpy(), trajectory[:,:,i].detach().cpu().numpy()) for i in range(N)]
+            target = target.transpose((2, 0, 1)).reshape((N, -1)).T
+            trajectory = trajectory.transpose((2, 0, 1)).reshape((N, -1)).T
+            r2 = [r2_score(target[:, i], trajectory[:, i]) for i in range(N)]
+            return np.mean(r2)
         else:
             raise ValueError("Invalid r2_mode. Choose 'per_batch', 'per_time_step' or 'per_neuron'.")
-        if not r2_all:
-            r2 = np.array(r2).mean().item()
-        
-        return r2
