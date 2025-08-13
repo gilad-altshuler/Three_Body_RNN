@@ -102,3 +102,32 @@ def generate_data(DATA_DIR, monkey = 'A', DEVICE="cpu"):
     return random_split(dataset, [n_train, n_valid, n_test],
                         generator=torch.Generator().manual_seed(0))
     
+
+def evaluate(model, dataset, r2_mode='per_batch', r2_all=False):
+    """
+    Evaluate the model on the K-Bit Flipflop task.
+    :param model: The model to evaluate
+    :param dataset: The dataset to evaluate on
+    :param r2_mode: Mode for R2 score calculation ('per_batch', 'per_time_step', or 'per_neuron'). Default is 'per_batch'.
+    :param r2_all: If True, return R2 scores for all modes, otherwise return mean R2 score. Default is False.
+    :return: r2 score
+    """
+    from torch.utils.data import DataLoader
+    from sklearn.metrics import r2_score
+    for input, target, hidden, _ in DataLoader(dataset, len(dataset)): None
+    B,T,N = target.shape
+    model.eval()
+    with torch.no_grad():
+        trajectory = model(input, hidden)[0]
+        if r2_mode == 'per_batch':
+            r2 = [r2_score(target[i].detach().cpu().numpy(), trajectory[i].detach().cpu().numpy()) for i in range(B)]
+        elif r2_mode == 'per_time_step':
+            r2 = [r2_score(target[:,i].detach().cpu().numpy(), trajectory[:,i].detach().cpu().numpy()) for i in range(T)]
+        elif r2_mode == 'per_neuron':
+            r2 = [r2_score(target[:,:,i].detach().cpu().numpy(), trajectory[:,:,i].detach().cpu().numpy()) for i in range(N)]
+        else:
+            raise ValueError("Invalid r2_mode. Choose 'per_batch', 'per_time_step' or 'per_neuron'.")
+        if not r2_all:
+            r2 = np.array(r2).mean().item()
+        
+        return r2

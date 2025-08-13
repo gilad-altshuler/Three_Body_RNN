@@ -19,7 +19,6 @@ def train_mante_inference(run_name, ranks, epochs, batch_size, lr):
     train_dataset, valid_dataset, test_dataset = generate_data(DATA_ROOT, DEVICE=DEVICE)
     input,target,hidden,_ = train_dataset.dataset.tensors
 
-    # set up training parameters
     criterion = torch.nn.MSELoss()
 
     w_out = torch.nn.Identity()

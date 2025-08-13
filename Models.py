@@ -77,9 +77,8 @@ def train(model,dataset,epochs,optimizer,criterion,
         for input, target, hidden, mask in dataloader:
             optimizer.zero_grad()
             prediction, _, _ = model.forward(input, hidden)
-            B,_,N = prediction.shape
             ### calculate the loss
-            loss = criterion(prediction[mask].reshape(B,-1,N), target[mask].reshape(B,-1,N))
+            loss = criterion(prediction[mask], target[mask])
             ### perform backprop and update weights
             loss.backward()
             if clip_gradient is not None:
@@ -93,8 +92,7 @@ def train(model,dataset,epochs,optimizer,criterion,
         with torch.no_grad():
             for input, target, hidden, mask in DataLoader(dataset, len(dataset)): None
             prediction,_ ,_ = model.forward(input, hidden)
-            B,_,N = prediction.shape
-            train_loss = criterion(prediction[mask].reshape(B,-1,N), target[mask].reshape(B,-1,N))
+            train_loss = criterion(prediction[mask], target[mask])
             losses.append(train_loss.cpu().data.item())
 
             if valid_set is not None:
