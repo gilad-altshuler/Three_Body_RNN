@@ -10,7 +10,7 @@ git clone https://github.com/mackelab/smc_rnns.git "$REPO"
 
 # -------- conda env from their YAML (no cd) --------
 # remove non-portable prefix if present
-sed -i '/^prefix:/d' "$REPO/smc_rnn_env.yml" 2>/dev/null || true
+# sed -i '/^prefix:/d' "$REPO/smc_rnn_env.yml" 2>/dev/null || true
 conda env create -f "$REPO/smc_rnn_env.yml" -n smc_rnn_env
 
 # -------- DANDI in their env; absolute output dir --------

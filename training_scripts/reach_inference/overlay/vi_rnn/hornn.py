@@ -1,8 +1,11 @@
+import os
 import torch
 import torch.nn as nn
 import numpy as np
 from initialize_parameterize_hornn import *
 
+RNN_DIM = int(os.getenv("RNN_DIM", "5"))
+TBRNN_DIM = int(os.getenv("TBRNN_DIM", "1"))
 
 class RNN(nn.Module):
     """
@@ -525,8 +528,8 @@ class Transition_LowRank(nn.Module):
                 torch.zeros(hidden_dim), requires_grad=train_neuron_bias
             )
 
-        self.l_tbrnn, self.m_tbrnn, self.n_tbrnn = initialize_Ws_tbrnn(1, hidden_dim)
-        self.m_rnn, self.n_rnn = initialize_Ws_rnn(36, hidden_dim)
+        self.l_tbrnn, self.m_tbrnn, self.n_tbrnn = initialize_Ws_tbrnn(TBRNN_DIM, hidden_dim)
+        self.m_rnn, self.n_rnn = initialize_Ws_rnn(RNN_DIM, hidden_dim)
 
         # Input weights
         if self.du > 0:
