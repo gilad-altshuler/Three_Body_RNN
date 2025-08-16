@@ -29,6 +29,8 @@ class RNN(nn.Module):
         self.dim_u = dim_u
         self.dim_N = dim_N
 
+        assert dim_z == RNN_DIM + TBRNN_DIM, f"Expected dim_z to be {RNN_DIM + TBRNN_DIM}, but got {dim_z}"
+
         self.params = params
         self.normal = torch.distributions.Normal(0, 1)
 
