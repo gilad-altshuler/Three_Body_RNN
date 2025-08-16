@@ -8,18 +8,16 @@ TARGET="$REPO/data_untracked/dandi"
 # -------- clone --------
 git clone https://github.com/mackelab/smc_rnns.git "$REPO"
 
-# -------- conda env from their YAML (no cd) --------
-# remove non-portable prefix if present
-# sed -i '/^prefix:/d' "$REPO/smc_rnn_env.yml" 2>/dev/null || true
+# -------- conda env from YAML --------
 conda env create -f "$REPO/smc_rnn_env.yml" -n smc_rnn_env
 
-# -------- DANDI in their env; absolute output dir --------
+# -------- DANDI in env --------
 mkdir -p "$TARGET"
 conda run -n smc_rnn_env python -m pip install -U dandi
 conda run -n smc_rnn_env dandi download DANDI:000128/0.220113.0400 \
   -o "$TARGET" --existing skip --download assets -J 8
 
-# -------- make tensors (run from their repo, but in a subshell) --------
+# -------- make tensors --------
 (
   cd "$REPO" || exit 1
   conda run -n smc_rnn_env python train_scripts/macaque_reach/make_tensors_conditioning.py --binsize 20
