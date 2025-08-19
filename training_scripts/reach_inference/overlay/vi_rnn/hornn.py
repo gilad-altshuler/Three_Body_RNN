@@ -2,10 +2,12 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
-from initialize_parameterize_hornn import *
+from .initialize_parameterize_hornn import *
 
-RNN_DIM = int(os.getenv("RNN_DIM", "5"))
-TBRNN_DIM = int(os.getenv("TBRNN_DIM", "1"))
+RNN_DIM   = int(os.getenv("RNN_DIM","0"))
+TBRNN_DIM = int(os.getenv("TBRNN_DIM","0"))
+
+print("USING OVERLAY hornn:", __file__, RNN_DIM, TBRNN_DIM)
 
 class RNN(nn.Module):
     """

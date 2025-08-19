@@ -5,7 +5,7 @@ OVERLAY="$ROOT/$OVERLAY_REL"
 REPO="$HOME/ext/smc_rnns"                                       
 TARGET="$REPO/data_untracked/dandi"
 
-# -------- clone --------
+# -------- clone git --------
 git clone https://github.com/mackelab/smc_rnns.git "$REPO"
 
 # -------- conda env from YAML --------

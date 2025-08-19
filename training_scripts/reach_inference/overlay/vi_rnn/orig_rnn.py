@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from initialize_parameterize_tbrnn import *
+from .initialize_parameterize import *
 
+print("USING OVERLAY rnn:", __file__)
 
 class RNN(nn.Module):
     """
@@ -173,7 +174,7 @@ class RNN(nn.Module):
             self.get_initial_state = lambda u: self.initial_state.unsqueeze(
                 0
             ) + orth_proj(
-                self.transition.l,
+                self.transition.m,
                 torch.einsum("Nu,Bu->BN", self.transition.Wu, u),
             )
 
@@ -184,7 +185,7 @@ class RNN(nn.Module):
             self.get_initial_state = lambda u: self.initial_state.unsqueeze(
                 0
             ) + orth_proj(
-                self.transition.l,
+                self.transition.m,
                 torch.einsum("Nu,Bu->BN", self.transition.Wu, u),
             )
 
@@ -192,7 +193,7 @@ class RNN(nn.Module):
             self.get_initial_state = lambda u: -self.transition.h.unsqueeze(
                 0
             ) + orth_proj(
-                self.transition.l,
+                self.transition.m,
                 torch.einsum("Nu,Bu->BN", self.transition.Wu, u),
             )
 
@@ -525,7 +526,14 @@ class Transition_LowRank(nn.Module):
                 torch.zeros(hidden_dim), requires_grad=train_neuron_bias
             )
 
-        self.l, self.m, self.n = initialize_Ws(dz, hidden_dim)
+        # weights (left and right singular vectors)
+        if weight_dist == "uniform":
+            self.n, self.m = initialize_Ws_uniform(dz, hidden_dim)
+        elif weight_dist == "gauss":
+            self.n, self.m = initialize_Ws_gauss(dz, hidden_dim)
+        else:
+            print("WARNING: weight distribution not implemented, using uniform")
+            self.n, self.m = initialize_Ws_uniform(dz, hidden_dim)
 
         # Input weights
         if self.du > 0:
@@ -549,7 +557,7 @@ class Transition_LowRank(nn.Module):
             z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
         """
         R = self.get_rates(z, v=v)
-        z = self.decay * z + torch.einsum("zN,BN...->Bz...", self.n, R) * torch.einsum("zN,BN...->Bz...", self.m, R)
+        z = self.decay * z + torch.einsum("zN,BN...->Bz...", self.n, R)
         return z
 
     def step_input(self, v, u):
@@ -584,243 +592,109 @@ class Transition_LowRank(nn.Module):
         Returns:
             X (torch.tensor; n_trials x dim_N x time_steps x k): neuron activity before nonlinearity
         """
-        X = torch.einsum("Nz,Bz...->BN...", self.l, z) + torch.einsum(
+        X = torch.einsum("Nz,Bz...->BN...", self.m, z) + torch.einsum(
             "Nu,Bu...->BN...", self.Wu, v
         )
         return X
 
 
+class Transition_FullRank(nn.Module):
+    """
+    Alternative latent dynamics of the transition
+    parameterised by a full-rank RNN
+    """
 
-# class Transition_LowRank(nn.Module):
-#     """
-#     Latent dynamics of the transition, parameterised by a low-rank RNN
-#     """
+    def __init__(
+        self,
+        dz,
+        du,
+        nonlinearity,
+        decay,
+        g=np.sqrt(2),
+        train_neuron_bias=True,
+    ):
+        """
+        Args:
+            dz (int): mount of neurons in the full rank RNN
+            du (int): dimensionality of the inputs
+            nonlinearity (str): nonlinearity of the hidden layer
+            decay (float): related to time constant tau as (1-dt/tau)
+            g (float): scale/gain of the recurrent weights
+            train_neuron_bias (bool): whether to train the bias of the neurons (x)
+        """
+        super(Transition_FullRank, self).__init__()
+        self.dz = dz
+        self.du = du
 
-#     def __init__(
-#         self,
-#         dz,
-#         du,
-#         hidden_dim,
-#         nonlinearity,
-#         decay,
-#         weight_dist="uniform",
-#         train_neuron_bias=True,
-#     ):
-#         """
-#         Args:
-#             dz (int): dimensionality of the latent space
-#             du (int): dimensionality of the inputs
-#             hidden_dim (int): amount of neurons in the low-rank RNN
-#             nonlinearity (str): nonlinearity of the hidden layer
-#             decay (float): decay constant
-#             weight_dist (str): weight distribution
-#             train_neuron_bias (bool): whether to train the bias of the neurons (x)
-#         """
-#         super(Transition_LowRank, self).__init__()
-#         self.dz = dz
-#         self.du = du
+        # nonlinearity
+        if nonlinearity == "relu":
+            print("using ReLU activation")
+            relu = torch.nn.ReLU()
+            self.nonlinearity = lambda x, h: relu(x - h)
+            self.dnonlinearity = relu_derivative
+        elif nonlinearity == "clipped_relu":
+            print("using clipped ReLU activation")
+            relu = torch.nn.ReLU()
+            self.nonlinearity = lambda x, h: relu(x + h) - relu(x)
+            self.dnonlinearity = clipped_relu_derivative
+        elif nonlinearity == "tanh":
+            print("using tanh activation")
+            self.nonlinearity = lambda x, h: torch.nn.Tanh(x - h)
+            self.dnonlinearity = tanh_derivative
+        elif nonlinearity == "identity":
+            print("using identity activation")
+            self.nonlinearity = lambda x, h: x - h
+            self.dnonlinearity = lambda x: torch.ones_like(x)
+        else:
+            raise ValueError(
+                "nonlinearity not recognised, use relu, clipped_relu, tanh, or identity"
+            )
+        # time constants
+        self.decay_param = nn.Parameter(torch.log(-torch.log(torch.ones(1) * decay)))
 
-#         # nonlinearity
-#         if nonlinearity == "relu":
-#             relu = torch.nn.ReLU()
-#             self.nonlinearity = lambda x, h: relu(x - h)
-#             self.dnonlinearity = relu_derivative
-#         elif nonlinearity == "clipped_relu":
-#             relu = torch.nn.ReLU()
-#             self.nonlinearity = lambda x, h: relu(x + h) - relu(x)
-#             self.dnonlinearity = clipped_relu_derivative
-#         elif nonlinearity == "tanh":
-#             self.nonlinearity = lambda x, h: torch.nn.Tanh(x - h)
-#             self.dnonlinearity = tanh_derivative
-#         elif nonlinearity == "identity":
-#             self.nonlinearity = lambda x, h: x - h
-#             self.dnonlinearity = lambda x: torch.ones_like(x)
-#         else:
-#             raise ValueError(
-#                 "nonlinearity not recognised, use relu, clipped_relu, tanh, or identity"
-#             )
-#         # time constants
-#         self.decay_param = nn.Parameter(torch.log(-torch.log(torch.ones(1) * decay)))
+        # bias of the neurons
+        if nonlinearity == "clipped_relu":
+            self.h = nn.Parameter(uniform_init1d(dz), requires_grad=train_neuron_bias)
+        else:
+            self.h = nn.Parameter(torch.zeros(dz), requires_grad=train_neuron_bias)
 
-#         # bias of the neurons
-#         if nonlinearity == "clipped_relu":
-#             self.h = nn.Parameter(
-#                 uniform_init1d(hidden_dim), requires_grad=train_neuron_bias
-#             )
-#         else:
-#             self.h = nn.Parameter(
-#                 torch.zeros(hidden_dim), requires_grad=train_neuron_bias
-#             )
+        # weights (left and right singular vectors)
+        self.W = nn.Parameter(
+            (1 - decay) * torch.randn(dz, dz) * g / np.sqrt(dz), requires_grad=True
+        )
 
-#         # weights (left and right singular vectors)
-#         if weight_dist == "uniform":
-#             self.n, self.m = initialize_Ws_uniform(dz, hidden_dim)
-#         elif weight_dist == "gauss":
-#             self.n, self.m = initialize_Ws_gauss(dz, hidden_dim)
-#         else:
-#             print("WARNING: weight distribution not implemented, using uniform")
-#             self.n, self.m = initialize_Ws_uniform(dz, hidden_dim)
+        # Input weights
+        if self.du > 0:
+            self.Wu = nn.Parameter(uniform_init2d(dz, self.du), requires_grad=True)
+        else:
+            self.Wu = torch.zeros(dz, 0)
 
-#         # Input weights
-#         if self.du > 0:
-#             self.Wu = nn.Parameter(
-#                 uniform_init2d(hidden_dim, self.du), requires_grad=True
-#             )
-#         else:
-#             self.Wu = torch.zeros(hidden_dim, 0)
+    @property
+    def decay(self):
+        return torch.exp(-torch.exp(self.decay_param)).view(1, 1, 1)
 
-#     @property
-#     def decay(self):
-#         return torch.exp(-torch.exp(self.decay_param)).view(1, 1, 1)
+    def forward(self, z, v):
+        """
+        One step forward
+        Args:
+            z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
+            u (torch.tensor; n_trials x dim_u x time_steps x k): input
+        Returns:
+            z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
+        """
+        z = self.decay * z + (
+            torch.einsum(
+                "zN,BN...->Bz...",
+                self.W,
+                self.nonlinearity(z, self.h.view(1, -1, 1)),
+            )
+        )
 
-#     def forward(self, z, v):
-#         """
-#         Latent RNN (internal) dynamics, one step forward
-#         Args:
-#             z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
-#             v (torch.tensor; n_trials x dim_u x time_steps x k): filtered input
-#         Returns:
-#             z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
-#         """
-#         R = self.get_rates(z, v=v)
-#         z = self.decay * z + torch.einsum("zN,BN...->Bz...", self.n, R)
-#         return z
+        z += torch.einsum("Nu,Bu...->BN...", self.Wu, v)
+        return z
 
-#     def step_input(self, v, u):
-#         """
-#         Latent RNN input dynamics, one step forward
-#         Args:
-#             v (torch.tensor; n_trials x dim_u x k): input filtered by RNN dynamics
-#             u (torch.tensor; n_trials x dim_u x k): raw input
-#         Returns:
-#             v (torch.tensor; n_trials x dim_u x k): input filtered by RNN dynamics
-#         """
-#         v = self.decay * v + (1 - self.decay) * u
-#         return v
-
-#     def get_rates(self, z, v):
-#         """Transform latents to neuron activity, after nonlinearity
-#         Args:
-#             z (torch.tensor; n_trials x dim_z x k): latent time series
-#             v (torch.tensor; n_trials x dim_u x k): filtered input
-#         Returns:
-#             R (torch.tensor; n_trials x dim_N x k): neuron activity after nonlinearity
-#         """
-#         X = self.get_currents(z, v)
-#         R = self.nonlinearity(X, self.h.view(1, -1, 1))
-#         return R
-
-#     def get_currents(self, z, v):
-#         """Transform latents to neuron activity, before nonlinearity
-#         Args:
-#             z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
-#             v (torch.tensor; n_trials x dim_u x time_steps x k): filtered input
-#         Returns:
-#             X (torch.tensor; n_trials x dim_N x time_steps x k): neuron activity before nonlinearity
-#         """
-#         X = torch.einsum("Nz,Bz...->BN...", self.m, z) + torch.einsum(
-#             "Nu,Bu...->BN...", self.Wu, v
-#         )
-#         return X
-
-
-# class Transition_FullRank(nn.Module):
-#     """
-#     Alternative latent dynamics of the transition
-#     parameterised by a full-rank RNN
-#     """
-
-#     def __init__(
-#         self,
-#         dz,
-#         du,
-#         nonlinearity,
-#         decay,
-#         g=np.sqrt(2),
-#         train_neuron_bias=True,
-#     ):
-#         """
-#         Args:
-#             dz (int): mount of neurons in the full rank RNN
-#             du (int): dimensionality of the inputs
-#             nonlinearity (str): nonlinearity of the hidden layer
-#             decay (float): related to time constant tau as (1-dt/tau)
-#             g (float): scale/gain of the recurrent weights
-#             train_neuron_bias (bool): whether to train the bias of the neurons (x)
-#         """
-#         super(Transition_FullRank, self).__init__()
-#         self.dz = dz
-#         self.du = du
-
-#         # nonlinearity
-#         if nonlinearity == "relu":
-#             print("using ReLU activation")
-#             relu = torch.nn.ReLU()
-#             self.nonlinearity = lambda x, h: relu(x - h)
-#             self.dnonlinearity = relu_derivative
-#         elif nonlinearity == "clipped_relu":
-#             print("using clipped ReLU activation")
-#             relu = torch.nn.ReLU()
-#             self.nonlinearity = lambda x, h: relu(x + h) - relu(x)
-#             self.dnonlinearity = clipped_relu_derivative
-#         elif nonlinearity == "tanh":
-#             print("using tanh activation")
-#             self.nonlinearity = lambda x, h: torch.nn.Tanh(x - h)
-#             self.dnonlinearity = tanh_derivative
-#         elif nonlinearity == "identity":
-#             print("using identity activation")
-#             self.nonlinearity = lambda x, h: x - h
-#             self.dnonlinearity = lambda x: torch.ones_like(x)
-#         else:
-#             raise ValueError(
-#                 "nonlinearity not recognised, use relu, clipped_relu, tanh, or identity"
-#             )
-#         # time constants
-#         self.decay_param = nn.Parameter(torch.log(-torch.log(torch.ones(1) * decay)))
-
-#         # bias of the neurons
-#         if nonlinearity == "clipped_relu":
-#             self.h = nn.Parameter(uniform_init1d(dz), requires_grad=train_neuron_bias)
-#         else:
-#             self.h = nn.Parameter(torch.zeros(dz), requires_grad=train_neuron_bias)
-
-#         # weights (left and right singular vectors)
-#         self.W = nn.Parameter(
-#             (1 - decay) * torch.randn(dz, dz) * g / np.sqrt(dz), requires_grad=True
-#         )
-
-#         # Input weights
-#         if self.du > 0:
-#             self.Wu = nn.Parameter(uniform_init2d(dz, self.du), requires_grad=True)
-#         else:
-#             self.Wu = torch.zeros(dz, 0)
-
-#     @property
-#     def decay(self):
-#         return torch.exp(-torch.exp(self.decay_param)).view(1, 1, 1)
-
-#     def forward(self, z, v):
-#         """
-#         One step forward
-#         Args:
-#             z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
-#             u (torch.tensor; n_trials x dim_u x time_steps x k): input
-#         Returns:
-#             z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
-#         """
-#         z = self.decay * z + (
-#             torch.einsum(
-#                 "zN,BN...->Bz...",
-#                 self.W,
-#                 self.nonlinearity(z, self.h.view(1, -1, 1)),
-#             )
-#         )
-
-#         z += torch.einsum("Nu,Bu...->BN...", self.Wu, v)
-#         return z
-
-#     def step_input(self, v, u):
-#         """
-#         no need to simulate input dynamics seperately for full rank RNNs, so just return v
-#         """
-#         return v
+    def step_input(self, v, u):
+        """
+        no need to simulate input dynamics seperately for full rank RNNs, so just return v
+        """
+        return v
