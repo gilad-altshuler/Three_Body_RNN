@@ -3,4 +3,5 @@ __pycache__/
 *.pt
 .env
 .ipynb_checkpoints/
+*.txt
 
