@@ -94,15 +94,15 @@ bash training_scripts/mante_inference/train_mante_inference.py > ../master_log.t
 2) Macaque task results - this is comletely based on "" code. We only added Low-rank HORNN model package as an overlay to their RNN package.
 First, to install their repo, and to prepare the data, run:
 ```
-training_scripts/reach_inference/prepare.sh
+bash training_scripts/reach_inference/prepare.sh > ../master_log.txt 2>&1 &
 ```
 Now, you can train either with or without conditioning with the train scripts (you can also add nohup):
 ```
-training_scripts/reach_inference/reach_condition/run_reach_condition.sh
+bash training_scripts/reach_inference/reach_condition/run_reach_condition.sh > ../master_log.txt 2>&1 &
 ```
 or
 ```
-training_scripts/reach_inference/reach_nlb/run_reach_nlb.sh
+bash training_scripts/reach_inference/reach_nlb/run_reach_nlb.sh > ../master_log.txt 2>&1 &
 ```
 respectively.
 Next, run the notebook:
