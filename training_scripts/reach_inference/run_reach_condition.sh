@@ -117,6 +117,4 @@ PIDFILE="$ROOT/outputs/reach_inference/pids.txt"
   while ((${#PID_GPU[@]})); do reap_one; done
 )
 
-# Optional collect:
-# PYTHONPATH="$ROOT:$OVERLAY:$REPO${PYTHONPATH:+:$PYTHONPATH}" \
-# conda run -n smc_rnn_env python -m training_scripts.mante_inference.collect_data
+python "$ROOT/training_scripts/reach_inference/collect_data.py"
