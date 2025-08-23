@@ -105,6 +105,7 @@ or
 bash training_scripts/reach_inference/reach_nlb/run_reach_nlb.sh > ../master_log.txt 2>&1 &
 ```
 respectively.
+
 Next, run the notebook:
 
 [5_Neural_Trajectory_inference.ipynb](notebooks/5_Neural_Trajectory_inference.ipynb)
