@@ -21,5 +21,5 @@ conda run -n smc_rnn_env dandi download DANDI:000128/0.220113.0400 \
 (
   cd "$REPO" || exit 1
   conda run -n smc_rnn_env python train_scripts/macaque_reach/make_tensors_conditioning.py --binsize 20
-  # conda run -n smc_rnn_env python train_scripts/macaque_reach/make_tensors_nlb.py --binsize 20
+  conda run -n smc_rnn_env python train_scripts/macaque_reach/make_tensors_nlb.py --binsize 20
 )

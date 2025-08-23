@@ -6,6 +6,13 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
 OVERLAY="$ROOT/training_scripts/reach_inference/overlay"   # overlay ROOT
 REPO="$HOME/ext/smc_rnns"
 
+
+# -------- make tensors --------
+(
+  cd "$REPO" || exit 1
+  conda run -n smc_rnn_env python train_scripts/macaque_reach/make_tensors_nlb.py --binsize 20
+)
+
 # ---------- scheduler ----------
 N=30
 START=1
@@ -15,11 +22,10 @@ GPUS=(0 1 2 3)
 # ---------- configs ----------
 # "DIM_Z,rnn"  OR  "RNN_DIM,TBRNN_DIM,hornn"
 CONFIGS=(
-  "5,rnn"
-  "6,rnn"
-  "4,1,hornn"
-  "5,1,hornn"
-  "6,1,hornn"
+  "36,rnn"
+  "34,1,hornn"
+  "35,1,hornn"
+  "36,1,hornn"
 )
 
 # ---------- helpers ----------
@@ -59,8 +65,8 @@ pick_gpu() {
 }
 
 # ---------- run ----------
-mkdir -p "$ROOT/outputs/reach_inference"
-PIDFILE="$ROOT/outputs/reach_inference/pids.txt"
+mkdir -p "$ROOT/outputs/reach_inference/reach_nlb"
+PIDFILE="$ROOT/outputs/reach_inference/reach_nlb/pids.txt"
 : > "$PIDFILE"
 
 (
@@ -79,12 +85,12 @@ PIDFILE="$ROOT/outputs/reach_inference/pids.txt"
 
       GPU_ID=$(pick_gpu)
       RUN=$(printf "%03d" "$i")
-      LOG_DIR="$ROOT/outputs/reach_inference/$MODEL/$TAG"
+      LOG_DIR="$ROOT/outputs/reach_inference/reach_nlb/$MODEL/$TAG"
       mkdir -p "$LOG_DIR"
 
       # Build command as ONE array starting with `env` (no line breaks)
       cmd=(env
-           OVERLAY="$OVERLAY" REPO="$REPO"
+           OVERLAY="$OVERLAY" REPO="$REPO" TRAIN_SCRIPT="reach_nlb"
            RNN_IMPL="$MODEL"
            CUDA_VISIBLE_DEVICES="$GPU_ID")
 
@@ -95,8 +101,8 @@ PIDFILE="$ROOT/outputs/reach_inference/pids.txt"
 
       # append program & Hydra overrides
       cmd+=(conda run -n smc_rnn_env
-           python "$ROOT/training_scripts/reach_inference/with_overlay.py"
-           --run_name "reach_conditioning/${TAG}_${MODEL}/$RUN"
+           python "$ROOT/training_scripts/reach_inference/overlay/with_overlay.py"
+           --run_name "reach_nlb/${TAG}_${MODEL}/$RUN"
            vae_params=default "vae_params.dim_z=$DIM_Z")
 
       # header then launch
@@ -117,4 +123,4 @@ PIDFILE="$ROOT/outputs/reach_inference/pids.txt"
   while ((${#PID_GPU[@]})); do reap_one; done
 )
 
-python "$ROOT/training_scripts/reach_inference/collect_data.py"
+python "$ROOT/training_scripts/reach_inference/reach_nlb/collect_data.py"

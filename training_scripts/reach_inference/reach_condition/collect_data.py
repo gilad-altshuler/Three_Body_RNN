@@ -7,7 +7,7 @@ import pickle
 
 ROOT = Path(__file__).absolute().parent.parent.parent
 RUN_DIR = ROOT.parent / "ext" / "runs" / "reach_conditioning"
-DATA_DIR = ROOT / "data" / "reach_inference"
+DATA_DIR = ROOT / "data" / "reach_inference" / "reach_condition"
 CONFIGS=(
   "r_5_rnn",
   "r_6_rnn",
