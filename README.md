@@ -50,7 +50,7 @@ Next, run the notebook:
 ### Expanding solution space
 To reproduce - run train script (you can also add nohup):
 ```
-training_scripts/solution_space/run_multiple.sh > ../master_log.txt 2>&1 &
+bash training_scripts/solution_space/run_multiple.sh > ../master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
@@ -61,7 +61,7 @@ Next, run the notebook:
 ### Teacher-student setup on synthetic neuroscience data
 To reproduce - run train script (you can also add nohup):
 ```
-training_scripts/teacher_student/run_multiple_tasks.sh > ../master_log.txt 2>&1 &
+bash training_scripts/teacher_student/run_multiple_tasks.sh > ../master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
@@ -74,10 +74,39 @@ Next, run the notebook:
 ### Multi-Fate inference task
 To reproduce - run train script (you can also add nohup):
 ```
-training_scripts/multifate_inference/run_multiple.sh > ../master_log.txt 2>&1 &
+bash training_scripts/multifate_inference/run_multiple.sh > ../master_log.txt 2>&1 &
 ```
 Next, run the notebook:
 
 [4_MultiFate_inference.ipynb](notebooks/4_MultiFate_inference.ipynb)
 *(May be run via **google colab** or **linux terminal**)*
 > Note that notebook can be run independently without the reproduction train - data used already located in data/multifate_inference directory
+
+### Monkey neural trajectory inference tasks
+> This devided to 2 tasks -
+> 1) Mante's inference task
+> 2) Macaque inference task
+To reproduce:
+1) Mante task results - run train script (you can also add nohup):
+```
+bash training_scripts/mante_inference/train_mante_inference.py > ../master_log.txt 2>&1 &
+```
+2) Macaque task results - this is comletely based on "" code. We only added Low-rank HORNN model package as an overlay to their RNN package.
+First, to install their repo, and to prepare the data, run:
+```
+training_scripts/reach_inference/prepare.sh
+```
+Now, you can train either with or without conditioning with the train scripts (you can also add nohup):
+```
+training_scripts/reach_inference/reach_condition/run_reach_condition.sh
+```
+or
+```
+training_scripts/reach_inference/reach_nlb/run_reach_nlb.sh
+```
+respectively.
+Next, run the notebook:
+
+[5_Neural_Trajectory_inference.ipynb](notebooks/5_Neural_Trajectory_inference.ipynb)
+*(May be run via **google colab** or **linux terminal**)*
+> Note that notebook can be run independently without the reproduction train - data used already located in data/mante_inference and data/reach_inference directories
