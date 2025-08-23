@@ -10,6 +10,7 @@ dependencies:
   - scikit-learn
   - pandas
   - pytorch
+  - h5py
   - pip
   - pip:
       - tensorly>=0
