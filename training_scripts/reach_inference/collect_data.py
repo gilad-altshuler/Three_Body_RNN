@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import numpy as np
 import h5py
+import pickle
 
 
 ROOT = Path(__file__).absolute().parent.parent.parent
@@ -27,6 +28,7 @@ r2s = {cfg: np.array([h5py.File(RUN_DIR / f"{cfg}/{run:03d}/checkpoints/best/met
 if not os.path.isdir(DATA_DIR):
     DATA_DIR.mkdir(parents=True)
 
-np.save(DATA_DIR / "r2s.npy", r2s)
+with open(DATA_DIR / "r2s.pkl", "wb") as f:
+    pickle.dump(r2s, f)
 
 print("Done. All data saved to:", DATA_DIR)
