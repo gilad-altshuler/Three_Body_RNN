@@ -83,7 +83,7 @@ Next, run the notebook:
 > Note that notebook can be run independently without the reproduction train - data used already located in data/multifate_inference directory
 
 ### Monkey neural trajectory inference tasks
-> This devided to 2 tasks -
+> This section devided into 2 tasks -
 > 1) Mante's inference task
 > 2) Macaque inference task
 To reproduce:
