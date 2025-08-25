@@ -6,13 +6,6 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
 OVERLAY="$ROOT/training_scripts/reach_inference/overlay"   # overlay ROOT
 REPO="$HOME/ext/smc_rnns"
 
-
-# -------- make tensors --------
-(
-  cd "$REPO" || exit 1
-  conda run -n smc_rnn_env python train_scripts/macaque_reach/make_tensors_nlb.py --binsize 20
-)
-
 # ---------- scheduler ----------
 N=30
 START=1
