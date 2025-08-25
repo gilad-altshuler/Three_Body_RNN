@@ -17,7 +17,7 @@ REPO="$HOME/ext/smc_rnns"
 N=30
 START=1
 MAX_JOBS_PER_GPU=3
-GPUS=(0 1 2 3)
+GPUS=(2 3)
 
 # ---------- configs ----------
 # "DIM_Z,rnn"  OR  "RNN_DIM,TBRNN_DIM,hornn"
@@ -103,6 +103,7 @@ PIDFILE="$ROOT/outputs/reach_inference/reach_nlb/pids.txt"
       cmd+=(conda run -n smc_rnn_env
            python "$ROOT/training_scripts/reach_inference/overlay/with_overlay.py"
            --run_name "reach_nlb/${TAG}_${MODEL}/$RUN"
+           dataset=mc_maze_20ms_val_nlb
            vae_params=default "vae_params.dim_z=$DIM_Z")
 
       # header then launch
