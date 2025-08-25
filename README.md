@@ -87,11 +87,11 @@ Next, run the notebook:
 > 1) Mante's inference task
 > 2) Macaque inference task
 To reproduce:
-1) Mante task results - run train script (you can also add nohup):
+1) Mante task results - code inspired by [https://github.com/adrian-valente/lowrank_inference](https://github.com/adrian-valente/lowrank_inference) - run train script (you can also add nohup):
 ```
 bash training_scripts/mante_inference/train_mante_inference.py > ../master_log.txt 2>&1 &
 ```
-2) Macaque task results - this is comletely based on "" code. We only added Low-rank HORNN model package as an overlay to their RNN package.
+2) Macaque task results - this part is comletely based on [https://github.com/mackelab/smc_rnns](https://github.com/mackelab/smc_rnns) code. We only added Low-rank HORNN model package as an overlay to their RNN package.
 First, to install their repo, and to prepare the data, run:
 ```
 bash training_scripts/reach_inference/prepare.sh > ../master_log.txt 2>&1 &
