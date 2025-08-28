@@ -242,7 +242,7 @@ def get_kappa_kappaI(model, Inputs, tau=0.2):
     :param tau: tau coefficient for K_I ODE, represent dt/tau
     :return: kappa (batch_size,T),kappaI (batch_size,T) evolution in time
     """
-    from Models import Low_Rank_RNN_Dynamics, Low_Rank_Three_Way_RNN_Dynamics
+    from methods.models import Low_Rank_RNN_Dynamics, Low_Rank_Three_Way_RNN_Dynamics
 
     if isinstance(model, Low_Rank_Three_Way_RNN_Dynamics):
         lead = model.L

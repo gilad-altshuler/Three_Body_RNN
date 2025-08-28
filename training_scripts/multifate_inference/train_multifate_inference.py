@@ -6,7 +6,7 @@ sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 import torch
 from torch import nn
 
-from Models import *
+from methods.models import *
 from tasks.MultiFate_task import generate_data
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"

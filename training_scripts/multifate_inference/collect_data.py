@@ -7,7 +7,7 @@ import pickle
 
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
-from Models import RNN, TBRNN, HORNN, get_model_str
+from methods.models import RNN, TBRNN, HORNN, get_model_str
 from tasks.MultiFate_task import evaluate
 
 ROOT = Path(__file__).absolute().parent.parent.parent

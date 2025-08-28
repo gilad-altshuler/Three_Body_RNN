@@ -9,7 +9,7 @@ import pickle
 
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
-from Models import Low_Rank_RNN, Low_Rank_TBRNN
+from methods.models import Low_Rank_RNN, Low_Rank_TBRNN
 from tasks.K_Bit_Flipflop_task import generate_data
 ROOT = Path(__file__).absolute().parent.parent.parent
 RUN_DIR = ROOT.parent / "runs" / "teacher_student"

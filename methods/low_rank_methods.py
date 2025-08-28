@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from tasks.K_Bit_Flipflop_task import accuracy
-from Models import *
+from methods.models import *
 
 
 def TCA_method(model,input,target,start_rank=1,end_rank=6,W0=None):

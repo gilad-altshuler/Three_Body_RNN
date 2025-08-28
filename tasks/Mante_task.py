@@ -3,7 +3,6 @@ Code is adapted from:
 Adrian Valente, May 2022.
 
 Train low-rank networks on the Mante data.
-Low-rank networks are pre-initialized with connectivity from a previously trained full-rank.
 """
 
 import pandas as pd

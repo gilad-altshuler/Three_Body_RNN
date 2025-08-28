@@ -7,10 +7,10 @@ ROOT = Path(__file__).absolute().parent.parent.parent
 RUN = 1
 RUN_DIR = ROOT.parent / "runs" / "low_rank_procedures" / TASK
 DATA_DIR = ROOT / "data" / "validation"
-methods = ["tca", "tt", "slice_tca", "lint"]
+lr_methods = ["tca", "tt", "slice_tca", "lint"]
 runs = 30
 
-for m in methods:
+for m in lr_methods:
     data = []
     for run in range(1, runs+1):
         path = RUN_DIR / f"{run:03d}/{m}.npy"

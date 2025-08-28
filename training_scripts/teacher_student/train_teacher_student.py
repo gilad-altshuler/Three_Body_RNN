@@ -6,8 +6,8 @@ sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 import torch
 from torch import nn
 
-from Models import *
-from low_rank_methods import LINT_method
+from methods.models import *
+from methods.low_rank_methods import LINT_method
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 

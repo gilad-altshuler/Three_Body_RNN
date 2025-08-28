@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import TensorDataset, Subset, DataLoader
-from utils import project_L_orthogonal_to_I, gram_schmidt
+from methods.utils import project_L_orthogonal_to_I, gram_schmidt
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 

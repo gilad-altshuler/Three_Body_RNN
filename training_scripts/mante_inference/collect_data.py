@@ -3,12 +3,11 @@ import sys, os
 from pathlib import Path
 import numpy as np
 import torch
-import copy
 import pickle
 
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
-from Models import Low_Rank_RNN, Low_Rank_HORNN
+from methods.models import Low_Rank_RNN, Low_Rank_HORNN
 from tasks.Mante_task import evaluate
 
 ROOT = Path(__file__).absolute().parent.parent.parent

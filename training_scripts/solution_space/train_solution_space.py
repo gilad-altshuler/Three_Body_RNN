@@ -6,7 +6,7 @@ import torch
 from torch import nn
 
 from tasks.K_Bit_Flipflop_task import generate_data
-from Models import *
+from methods.models import *
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 

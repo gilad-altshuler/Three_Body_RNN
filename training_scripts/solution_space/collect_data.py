@@ -5,8 +5,8 @@ import torch
 
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
-from utils import CKA
-from Models import Low_Rank_RNN, Low_Rank_TBRNN, Low_Rank_GRU
+from methods.utils import CKA
+from methods.models import Low_Rank_RNN, Low_Rank_TBRNN, Low_Rank_GRU
 
 ROOT = Path(__file__).absolute().parent.parent.parent
 SAVE_RUN = 1

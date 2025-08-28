@@ -1,13 +1,12 @@
 """
-multifate task (p58 in appendix of the paper):
+multifate task:
 
 use N = 32
 use symmetric,non-dimensional,expanded form
 params:
 - Kd = 1
 - n = 1.5
-- alpha in {0.4,0.8,1.2}
-- beta in {10,20,30}
+- beta / alpha = 25 (we define them 90,3.6 respectively)
 
 inputs take from one fp to another fp
 """
@@ -17,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-def ode_solver(y0, input, dt=0.01, T=100, Kd=1, n=1.5, alpha=1.2, beta=30):
+def ode_solver(y0, input, dt=0.01, T=100, Kd=1, n=1.5, alpha=3.6, beta=90):
     from scipy.integrate import solve_ivp
 
 
@@ -83,7 +82,7 @@ def generate_batched_init_states(B, P, N, alpha, beta):
 
     return torch.stack(all_states)  # Shape: (P * B, N)
 
-def generate_data(data_size, T, N ,dt = 0.1, Kd=1, n=1.5, alpha=0.4, beta=10, inducers=0, DEVICE="cpu"):
+def generate_data(data_size, T, N ,dt = 0.1, Kd=1, n=1.5, alpha=3.6, beta=90, inducers=0, DEVICE="cpu"):
     """
     Generate synthetic data for the MultiFate task.
     :param data_size: Number of samples to generate
@@ -202,7 +201,7 @@ def evaluate(model, input, target, hidden=None, r2_mode='per_neuron', r2_all=Fal
     :return: Tuple of (accuracy, mse error, R2 score, and teacher-student trajectory mse error)
     """
     from sklearn.metrics import r2_score
-    from utils import cka_linear_streaming
+    from methods.utils import cka_linear_streaming
     B,T,N = target.shape
     model.eval()
     with torch.no_grad():

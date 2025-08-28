@@ -5,7 +5,7 @@ sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
 import torch
 
-from Models import *
+from methods.models import *
 from tasks.Mante_task import generate_data
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
