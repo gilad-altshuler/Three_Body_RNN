@@ -5,7 +5,7 @@ import h5py
 import pickle
 
 
-ROOT = Path(__file__).absolute().parent.parent.parent
+ROOT = Path(__file__).absolute().parent.parent.parent.parent
 RUN_DIR = ROOT.parent / "ext" / "runs" / "reach_conditioning"
 DATA_DIR = ROOT / "data" / "reach_inference" / "reach_condition"
 CONFIGS=(

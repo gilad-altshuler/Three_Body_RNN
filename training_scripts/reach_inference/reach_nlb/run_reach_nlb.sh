@@ -10,7 +10,7 @@ REPO="$HOME/ext/smc_rnns"
 N=30
 START=1
 MAX_JOBS_PER_GPU=3
-GPUS=(2 3)
+GPUS=(0 )
 
 # ---------- configs ----------
 # "DIM_Z,rnn"  OR  "RNN_DIM,TBRNN_DIM,hornn"
@@ -65,7 +65,7 @@ PIDFILE="$ROOT/outputs/reach_inference/reach_nlb/pids.txt"
 (
   cd "$REPO" || exit 1
 
-  for i in $(seq "$START" "$((START + N - 1))"); do
+  for ((i = START + N - 1; i >= START; i--)); do
     for cfg in "${CONFIGS[@]}"; do
       IFS=',' read -r -a F <<<"$cfg"
 
@@ -78,6 +78,14 @@ PIDFILE="$ROOT/outputs/reach_inference/reach_nlb/pids.txt"
 
       GPU_ID=$(pick_gpu)
       RUN=$(printf "%03d" "$i")
+      RUN_NAME="reach_nlb/${TAG}_${MODEL}/$RUN"
+      RUN_DIR_REPO="$HOME/ext/runs/$RUN_NAME"
+
+      if [[ -d "$RUN_DIR_REPO" ]]; then
+        echo "[SKIP] exist: $RUN_NAME"
+        continue
+      fi
+
       LOG_DIR="$ROOT/outputs/reach_inference/reach_nlb/$MODEL/$TAG"
       mkdir -p "$LOG_DIR"
 
@@ -95,7 +103,7 @@ PIDFILE="$ROOT/outputs/reach_inference/reach_nlb/pids.txt"
       # append program & Hydra overrides
       cmd+=(conda run -n smc_rnn_env
            python "$ROOT/training_scripts/reach_inference/overlay/with_overlay.py"
-           --run_name "reach_nlb/${TAG}_${MODEL}/$RUN"
+           --run_name "$RUN_NAME"
            dataset=mc_maze_20ms_val_nlb
            vae_params=default "vae_params.dim_z=$DIM_Z")
 

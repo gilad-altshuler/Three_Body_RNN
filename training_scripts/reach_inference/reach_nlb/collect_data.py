@@ -5,16 +5,16 @@ import h5py
 import pickle
 
 
-ROOT = Path(__file__).absolute().parent.parent.parent
+ROOT = Path(__file__).absolute().parent.parent.parent.parent
 RUN_DIR = ROOT.parent / "ext" / "runs" / "reach_nlb"
 DATA_DIR = ROOT / "data" / "reach_inference" / "reach_nlb"
 CONFIGS=(
-  "36,rnn"
-  "34,1,hornn"
-  "35,1,hornn"
-  "36,1,hornn"
+  "r_36_rnn",
+  "r_34_r_1_hornn",
+  "r_35_r_1_hornn",
+  "r_36_r_1_hornn",
 )
-RUNS = 30
+RUNS = 14
 METRICS = ["co-bps","fp-bps","psth R2","vel R2"]
 
 if not os.path.isdir(RUN_DIR):
