@@ -10,7 +10,7 @@ REPO="$HOME/ext/smc_rnns"
 N=30
 START=1
 MAX_JOBS_PER_GPU=3
-GPUS=(0 )
+GPUS=(0 1 2 3)
 
 # ---------- configs ----------
 # "DIM_Z,rnn"  OR  "RNN_DIM,TBRNN_DIM,hornn"
@@ -65,7 +65,7 @@ PIDFILE="$ROOT/outputs/reach_inference/reach_nlb/pids.txt"
 (
   cd "$REPO" || exit 1
 
-  for ((i = START + N - 1; i >= START; i--)); do
+  for i in $(seq "$START" "$((START + N - 1))"); do
     for cfg in "${CONFIGS[@]}"; do
       IFS=',' read -r -a F <<<"$cfg"
 

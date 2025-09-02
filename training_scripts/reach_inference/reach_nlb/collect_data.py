@@ -14,7 +14,7 @@ CONFIGS=(
   "r_35_r_1_hornn",
   "r_36_r_1_hornn",
 )
-RUNS = 14
+RUNS = 30
 METRICS = ["co-bps","fp-bps","psth R2","vel R2"]
 
 if not os.path.isdir(RUN_DIR):
