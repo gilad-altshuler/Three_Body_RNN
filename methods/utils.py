@@ -370,39 +370,6 @@ def get_effective_tensor(model,normalize=True):
 
 import gc
 
-def center_gram(K):
-    """Centering the Gram matrix."""
-    n = K.size(0)
-    H = torch.eye(n, device=K.device) - (1.0 / n) * torch.ones((n, n), device=K.device)
-    centered = H @ K @ H
-    del H  # explicitly free
-    return centered
-
-def gram_linear(X):
-    """Compute linear kernel Gram matrix."""
-    return X @ X.T
-
-def heavy_cka(X, Y):
-    """Compute CKA (linear kernel) between X and Y."""
-    X = X - X.mean(0)
-    Y = Y - Y.mean(0)
-    
-    K = gram_linear(X)
-    L = gram_linear(Y)
-    
-    K_centered = center_gram(K)
-    L_centered = center_gram(L)
-
-    hsic = (K_centered * L_centered).sum()
-    norm_x = (K_centered * K_centered).sum()
-    norm_y = (L_centered * L_centered).sum()
-
-    del K, L, K_centered, L_centered
-    gc.collect()
-    torch.cuda.empty_cache()
-
-    return hsic / (norm_x.sqrt() * norm_y.sqrt())
-
 def CKA(X, Y):
     """
     Calculates CKA.
@@ -413,6 +380,7 @@ def CKA(X, Y):
 @torch.no_grad()
 def cka_linear_streaming(X, Y, chunk=8192, accum_device="cpu"):
     """
+    Compute CKA (linear kernel) between X and Y.
     X: (n, dx), Y: (n, dy). Works on huge n without n×n Grams.
     chunk: rows processed per step.
     accum_device: where to keep the small accumulators ("cpu" is safest).
