@@ -10,10 +10,10 @@ REPO="$HOME/ext/smc_rnns"
 N=30
 START=1
 MAX_JOBS_PER_GPU=3
-GPUS=(0 1 2 3)
+GPUS=(2 3)
 
 # ---------- configs ----------
-# "DIM_Z,rnn"  OR  "RNN_DIM,TBRNN_DIM,hornn"
+# "DIM_Z,rnn"  OR  "RNN_DIM,TBRNN_DIM,hornn" (in TBRNN case, DIM_Z = RNN_DIM + TBRNN_DIM)
 CONFIGS=(
   "36,rnn"
   "34,1,hornn"
