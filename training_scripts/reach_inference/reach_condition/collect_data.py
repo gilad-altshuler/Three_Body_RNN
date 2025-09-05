@@ -23,7 +23,7 @@ if not os.path.isdir(RUN_DIR):
 print("Configs:")
 for cfg in CONFIGS: print(cfg)
 
-r2s = {cfg: np.array([h5py.File(RUN_DIR / f"{cfg}/{run:03d}/checkpoints/best/metrics.h5", "r")["vel R2"][()] for run in range(1,RUNS)]) for cfg in CONFIGS}
+r2s = {cfg: np.array([h5py.File(RUN_DIR / f"{cfg}/{run:03d}/checkpoints/best/metrics.h5", "r")["vel R2"][()] for run in range(1,RUNS+1)]) for cfg in CONFIGS}
 
 if not os.path.isdir(DATA_DIR):
     DATA_DIR.mkdir(parents=True)
