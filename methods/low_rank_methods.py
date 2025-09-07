@@ -29,7 +29,7 @@ def TCA_method(model,input,target,start_rank=1,end_rank=6,W0=None):
       factors = parafac(twt, rank=rank)
       twt = torch.tensor(tl.cp_to_tensor(factors),device=DEVICE)
       if W0 is not None:
-          twt = twt + W0.detach().clone().to(DEVICE)
+          twt = twt + W0.detach().clone()
       newModel.w_hh = torch.nn.Parameter(twt)
       accs.append(accuracy(newModel(input,None)[0],target))
     return np.array(accs)

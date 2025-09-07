@@ -24,6 +24,7 @@ for i in $(seq $START $((START + N - 1))); do
   CUDA_VISIBLE_DEVICES=$GPU_ID nohup python \
     "$ROOT/training_scripts/validation/train_validation.py" \
     --run_name "$TASK/$(printf "%03d" $i)" \
+    --dW \
     > "$ROOT/outputs/validation/$TASK/output_$i.log" 2>&1 &
 done
 

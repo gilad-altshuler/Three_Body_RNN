@@ -3,6 +3,7 @@ import importlib
 from pathlib import Path
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
+import numpy as np
 import torch
 from torch import nn
 from methods.models import *
@@ -14,7 +15,7 @@ RUN_ROOT = Path(__file__).absolute().parent.parent.parent.parent / "runs" / "low
 
 def run_methods(Model_class,lr_class,run_name,ranks=[1,6],data_size=128,
                 T=100,input_size=3,output_size=3,hidden_dim=30,epochs=10000,
-                lint_epochs=30000,lr=[5e-4,1e-4],lint_lr=[1e-3,1e-3]):
+                lint_epochs=30000,lr=[5e-4,1e-4],lint_lr=[1e-3,1e-3],dW=False):
 
     run_dir = RUN_ROOT / run_name
     if not os.path.isdir(run_dir):
@@ -24,14 +25,18 @@ def run_methods(Model_class,lr_class,run_name,ranks=[1,6],data_size=128,
 
     criterion = nn.MSELoss().to(DEVICE)
 
-    task = importlib.import_module(run_name.split('/')[0])
-    generate_data = getattr(f'tasks.{task}', 'generate_data')
+    task = importlib.import_module("tasks."+run_name.split('/')[0])
+    accuracy = getattr(task, 'accuracy')
+    generate_data = getattr(task, 'generate_data')
     input, target = generate_data(data_size,T,input_size,DEVICE=DEVICE)
 
     while True:
         # define teacher
         teacher = Model_class(input_size, output_size, hidden_dim, mode='disc',
                         form='voltage',task=task, Win_bias=True, Wout_bias=True).to(DEVICE)
+        
+        # if truncate delta W instead of W
+        W0 = teacher.w_hh.detach().clone() if dW else None
 
         optimizer = torch.optim.Adam(teacher.parameters(), lr=lr[0])
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=end_factor,total_iters=epochs)
@@ -41,7 +46,6 @@ def run_methods(Model_class,lr_class,run_name,ranks=[1,6],data_size=128,
 
         eps = 0.05
 
-        accuracy = getattr("tasks."+importlib.import_module(run_name.split('/')[0]), 'accuracy')
         acc = accuracy(teacher(input,None)[0],target)
         if acc < (1-eps):
             print(f"Teacher model not trained, Accuracy: {acc}... trying again.")
@@ -51,24 +55,25 @@ def run_methods(Model_class,lr_class,run_name,ranks=[1,6],data_size=128,
             break
 
     # TCA method
-    tca = TCA_method(teacher, input, target, ranks[0], ranks[1])
+    tca = TCA_method(teacher, input, target, ranks[0], ranks[1], W0)
     print("TCA accuracies:", tca)
     # TT method
-    tt = TT_method(teacher, input, target, ranks[0], ranks[1])
+    tt = TT_method(teacher, input, target, ranks[0], ranks[1], W0)
     print("TT accuracies:", tt)
     # sliceTCA method
-    slice_tca = sliceTCA_method(teacher, input, target, ranks[0], ranks[1])
+    slice_tca = sliceTCA_method(teacher, input, target, ranks[0], ranks[1], W0)
     print("sliceTCA accuracies:", slice_tca)
     # LINT method
-    lint = LINT_method(teacher,lr_class,input,target,start_rank=ranks[0],end_rank=ranks[1],
-                       epochs=lint_epochs,batch_size = data_size,lr = lint_lr,to_save=run_dir,
-                       return_accs=True,rates=False)
-    print("LINT accuracies:", lint)
+    # lint = LINT_method(teacher,lr_class,input,target,start_rank=ranks[0],end_rank=ranks[1],
+    #                    epochs=lint_epochs,batch_size = data_size,lr = lint_lr,to_save=run_dir,
+    #                    return_accs=True,rates=False)
+    # print("LINT accuracies:", lint)
     # save results
-    np.save(run_dir / "tca.npy", tca)
-    np.save(run_dir / "tt.npy", tt)
-    np.save(run_dir / "slice_tca.npy", slice_tca)
-    np.save(run_dir / "lint.npy", lint) 
+    prefix = "dW_" if dW is not None else ""
+    np.save(run_dir / f"{prefix}tca.npy", tca)
+    np.save(run_dir / f"{prefix}tt.npy", tt)
+    np.save(run_dir / f"{prefix}slice_tca.npy", slice_tca)
+    # np.save(run_dir / "lint.npy", lint)
 
 if __name__ == "__main__":
     import argparse
@@ -91,9 +96,11 @@ if __name__ == "__main__":
     parser.add_argument("--lint_epochs", "-le", type=int, default=30000)
     parser.add_argument("--lr", "-lr", type=float, nargs=2, default=[5e-4, 1e-4])
     parser.add_argument("--lint_lr", "-llr", type=float, nargs=2, default=[1e-3, 1e-3])
+    parser.add_argument("--dW", "-dW", action='store_true', help="If true, truncate delta W instead of W.")
     args, extras = parser.parse_known_intermixed_args()
 
 
     run_methods(globals()[args.model],globals()[args.lr_class],args.run_name,
                 args.ranks,args.data_size,T=args.T,input_size=args.input_size,output_size=args.output_size,
-                hidden_dim=args.hidden_dim,epochs=args.epochs,lint_epochs=args.lint_epochs,lr=args.lr,lint_lr=args.lint_lr)
+                hidden_dim=args.hidden_dim,epochs=args.epochs,lint_epochs=args.lint_epochs,lr=args.lr,
+                lint_lr=args.lint_lr,dW=args.dW)

@@ -1,7 +1,9 @@
 name: TBRNN_env
 channels:
-  - defaults
+  - pytorch
+  - nvidia
   - conda-forge
+  - defaults
 dependencies:
   - python=3.10
   - numpy
@@ -9,8 +11,9 @@ dependencies:
   - tqdm
   - scikit-learn
   - pandas
-  - pytorch
   - h5py
+  - pytorch=2.3.*
+  - pytorch-cuda=11.8
   - pip
   - pip:
       - tensorly>=0
