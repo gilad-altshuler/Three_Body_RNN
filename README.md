@@ -22,7 +22,8 @@ present (right).
 |Fig 2. Neuroscience tasks and their biological gene expression counterparts|Created manually in Biorender.com|
 |Fig 3. Theory validation on K-Bit Flipflop task|[`1_Low_rank_TBRNN_validation.ipynb`](#Low-rank-TBRNN-validation)|
 |Fig 4. Expanding solution space|[`2_Solution_space.ipynb`](#Expanding-solution-space)|
-|Fig 5. Mapping tasks space|Created manually in Biorender.com|
+|Fig 5. Evaluation on neural recording tasks.|[`5_Neural_Trajectory_inference.ipynb`](#Monkey-neural-trajectory-inference-tasks)|
+|Fig 6. Mapping tasks space|Created manually in Biorender.com|
 |Table 1. Teacher-student inference results on K-bit Flip-Flop and sine wave synthetic tasks|[`3_Teacher_Student.ipynb`](#Teacher-student-setup-on-synthetic-neuroscience-data)|
 |Table 2. Model CKA scores performance on 30-MultiFate inference task|[`4_MultiFate inference.ipynb`](#Multi-Fate-inference-task)|
 
