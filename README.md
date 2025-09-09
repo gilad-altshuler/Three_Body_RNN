@@ -87,7 +87,9 @@ Next, run the notebook:
 > This section devided into 2 tasks -
 > 1) Mante's inference task
 > 2) Macaque inference task
+
 To reproduce:
+
 1) Mante task results - code inspired by [https://github.com/adrian-valente/lowrank_inference](https://github.com/adrian-valente/lowrank_inference) - run train script (you can also add nohup):
 ```
 bash training_scripts/mante_inference/train_mante_inference.py > ../master_log.txt 2>&1 &
