@@ -83,10 +83,10 @@ Next, run the notebook:
 *(May be run via **google colab** or **linux terminal**)*
 > Note that notebook can be run independently without the reproduction train - data used already located in data/multifate_inference directory
 
-### Monkey neural trajectory inference tasks
+### Neural recording inference tasks
 > This section devided into 2 tasks -
 > 1) Mante's inference task
-> 2) Macaque inference task
+> 2) MC-MAZE inference task
 
 To reproduce:
 
@@ -94,7 +94,7 @@ To reproduce:
 ```
 bash training_scripts/mante_inference/train_mante_inference.py > ../master_log.txt 2>&1 &
 ```
-2) Macaque task results - this part is comletely based on [https://github.com/mackelab/smc_rnns](https://github.com/mackelab/smc_rnns) code. We only added Low-rank HORNN model package as an overlay to their RNN package.
+2) MC-MAZE task results - this part is comletely based on [https://github.com/mackelab/smc_rnns](https://github.com/mackelab/smc_rnns) code. We only added Low-rank HORNN model package as an overlay to their RNN package.
 First, to install their repo, and to prepare the data, run:
 ```
 bash training_scripts/reach_inference/prepare.sh > ../master_log.txt 2>&1 &
