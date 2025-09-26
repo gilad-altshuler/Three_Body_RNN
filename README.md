@@ -14,7 +14,7 @@ Fig 1. Motivation: Three-body interactions.
     Figure created with BioRender.com. Panel (d) schematic inspired by Klumpe et al. (2023). 
 
 
-## Reproduce paper figures - You can open the notebooks in google colab and simply click "Run all". 
+## Reproduce paper figures 
 
 |Figure / Table         | Reproduce + Link to instructions |
 |----------------------|------|
@@ -28,6 +28,8 @@ Fig 1. Motivation: Three-body interactions.
 |Fig SI.1. Comparison of LrTBRNN with truncated $\Delta\mathcal{W}$|[`1_Low_rank_TBRNN_validation.ipynb`](#Low-rank-TBRNN-validation)|
 |Table 1. Teacher-student inference results on K-bit Flip-Flop and sine wave synthetic tasks|[`3_Teacher_Student.ipynb`](#Teacher-student-setup-on-synthetic-neuroscience-data)|
 |Table 2. Model CKA scores performance on 30-MultiFate inference task|[`4_MultiFate inference.ipynb`](#Multi-Fate-inference-task)|
+
+*You may open the notebooks in google colab and simply click "Run all".*
 
 ## Results - how to run
 ### Start
