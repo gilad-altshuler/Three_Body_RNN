@@ -1,3 +1,5 @@
+https://doi.org/10.5281/zenodo.17208623
+
 # Beyond Linear Summation - Three Body RNNs
 
 ## About
