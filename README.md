@@ -1,5 +1,4 @@
-# Beyond Linear Summation - Three Body RNNs
-[![DOI](https://zenodo.org/badge/681632750.svg)](https://doi.org/10.5281/zenodo.17208622)
+# Beyond Linear Summation - Three Body RNNs [![DOI](https://zenodo.org/badge/681632750.svg)](https://doi.org/10.5281/zenodo.17208622)
 
 ## About
 Code repository accompaning the paper "Beyond linear summation: Three-Body RNNs for modeling complex neural and biological systems"
