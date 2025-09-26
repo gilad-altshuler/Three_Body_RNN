@@ -1,4 +1,4 @@
-https://doi.org/10.5281/zenodo.17208623
+[![DOI](https://zenodo.org/badge/681632750.svg)](https://doi.org/10.5281/zenodo.17208622)
 
 # Beyond Linear Summation - Three Body RNNs
 
