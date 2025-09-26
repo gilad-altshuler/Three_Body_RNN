@@ -5,14 +5,13 @@ Code repository accompaning the paper "Beyond linear summation: Three-Body RNNs 
 
 <img width="2250" height="1500" alt="Three Body interactions (1)" src="https://github.com/user-attachments/assets/b0e5a8a6-b94e-472a-a844-5cbac45a82ea" />
 
-Fig 1. Motivation: Three-body interactions. (a) Neuromodulatory axon operate
-as a third-body in the synapse. (b) Incorporating glia cells into the network induce
-nonlinear summation. (c) Dendritic nonlinearities, where inputs on the same branch
-gate each other. (d) Gene expression networks; monomers that can dimerize and serve
-as transcription factors for each other, leading to full-rank three-body interaction (TF
-in panel = Transcription Factor). (e) Traditional neural network with linear
-pre-synaptic summation (left) while biophysics is more complex and input couplings
-present (right). 
+Fig 1. Motivation: Three-body interactions. 
+(a) Neuromodulatory axon operates as a third body in the synapse. 
+(b) Incorporating glial cells into the network induces nonlinear summation. 
+(c) Dendritic nonlinearities, where inputs on the same branch gate each other. 
+(d) Gene expression dimerization networks. Monomers form homo- or hetero-dimers that act as transcription factors (TFs). In the competitive setup shown, homo-dimers ($ii,jj,kk,\dots$) upregulate production of their own monomer. Hetero-dimers exert no direct regulation but lower the pool of free monomers, thereby indirectly downregulating expression.
+(e) Traditional neural network with linear pre-synaptic summation (left) while biophysics is more complex and input couplings present (right).
+    Figure created with BioRender.com. Panel (d) schematic inspired by Klumpe et al. (2023). 
 
 
 ## Reproduce paper figures
