@@ -14,7 +14,7 @@ Fig 1. Motivation: Three-body interactions.
     Figure created with BioRender.com. Panel (d) schematic inspired by Klumpe et al. (2023). 
 
 
-## Reproduce paper figures
+## Reproduce paper figures - You can open the notebooks in google colab and simply click "Run all". 
 
 |Figure / Table         | Reproduce + Link to instructions |
 |----------------------|------|
