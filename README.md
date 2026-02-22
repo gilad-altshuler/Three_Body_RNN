@@ -1,20 +1,22 @@
-# Beyond Linear Summation - Three Body RNNs
+# Beyond Linear Summation - Three Body RNNs [![DOI](https://zenodo.org/badge/681632750.svg)](https://doi.org/10.5281/zenodo.17208622)
 
 ## About
 Code repository accompaning the paper "Beyond linear summation: Three-Body RNNs for modeling complex neural and biological systems"
 
-<img width="2250" height="1500" alt="Three Body interactions" src="https://github.com/user-attachments/assets/0a406309-1f0f-4786-9e3c-6a9fe0a1ce11" />
-Fig 1. Motivation: Three-body interactions. (a) Neuromodulatory axon operate
-as a third-body in the synapse. (b) Incorporating glia cells into the network induce
-nonlinear summation. (c) Dendritic nonlinearities, where inputs on the same branch
-gate each other. (d) Gene expression networks; monomers that can dimerize and serve
-as transcription factors for each other, leading to full-rank three-body interaction (TF
-in panel = Transcription Factor). (e) Traditional neural network with linear
-pre-synaptic summation (left) while biophysics is more complex and input couplings
-present (right). 
+<img width="2250" height="1500" alt="Three Body interactions (1)" src="https://github.com/user-attachments/assets/b0e5a8a6-b94e-472a-a844-5cbac45a82ea" />
+
+Fig 1. Motivation: Three-body interactions. 
+(a) Neuromodulatory axon operates as a third body in the synapse. 
+(b) Incorporating glial cells into the network induces nonlinear summation. 
+(c) Dendritic nonlinearities, where inputs on the same branch gate each other. 
+(d) Gene expression dimerization networks. Monomers form homo- or hetero-dimers that act as transcription factors (TFs). In the competitive setup shown, homo-dimers ($ii,jj,kk,\dots$) upregulate production of their own monomer. Hetero-dimers exert no direct regulation but lower the pool of free monomers, thereby indirectly downregulating expression.
+(e) Traditional neural network with linear pre-synaptic summation (left) while biophysics is more complex and input couplings present (right).
+    Figure created with BioRender.com. Panel (d) schematic inspired by Klumpe et al. (2023). 
 
 
-## Reproduce paper figures
+## Reproduce paper figures 
+
+**You may open the notebooks in google colab and simply click "Run all".**
 
 |Figure / Table         | Reproduce + Link to instructions |
 |----------------------|------|
@@ -24,7 +26,8 @@ present (right).
 |Fig 4. Expanding solution space|[`2_Solution_space.ipynb`](#Expanding-solution-space)|
 |Fig 5. TBRNNs better recapitulate MultiFate protein dynamics than RNNs.|[`4_MultiFate inference.ipynb`](#Multi-Fate-inference-task)|
 |Fig 6. Evaluation on neural recording tasks.|[`5_Neural_recordings_inference.ipynb`](#Monkey-neural-trajectory-inference-tasks)|
-|Fig 7. Mapping tasks space|Created manually in Biorender.com|
+|Fig 7. Mapping tasks space|Created manually|
+|Fig SI.1. Comparison of LrTBRNN with truncated $\Delta\mathcal{W}$|[`1_Low_rank_TBRNN_validation.ipynb`](#Low-rank-TBRNN-validation)|
 |Table 1. Teacher-student inference results on K-bit Flip-Flop and sine wave synthetic tasks|[`3_Teacher_Student.ipynb`](#Teacher-student-setup-on-synthetic-neuroscience-data)|
 |Table 2. Model CKA scores performance on 30-MultiFate inference task|[`4_MultiFate inference.ipynb`](#Multi-Fate-inference-task)|
 
