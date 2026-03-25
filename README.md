@@ -5,7 +5,7 @@ Code repository accompaning the paper "Beyond linear summation: Three-Body RNNs 
 
 <img width="2250" height="1500" alt="three_body_interactions" src="https://github.com/user-attachments/assets/3fe1f2a9-06ed-4d45-8a2f-c0b552270112" />
 
-Fig 1. Motivation: Three-body interactions. 
+Fig 1. **Motivation: Three-body interactions.** 
 (a) Dendritic nonlinearities, where inputs on the same branch gate each other. 
 (b) Neuromodulatory axon operates as a third body in the synapse. 
 (c) Incorporating glial cells into the network induces nonlinear summation. 
