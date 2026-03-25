@@ -4,10 +4,7 @@ import torch.nn as nn
 import numpy as np
 from .initialize_parameterize_hornn import *
 
-RNN_DIM   = int(os.getenv("RNN_DIM","0"))
-TBRNN_DIM = int(os.getenv("TBRNN_DIM","0"))
-
-print("USING OVERLAY hornn:", __file__, RNN_DIM, TBRNN_DIM)
+print("USING OVERLAY tbrnn:", __file__)
 
 class RNN(nn.Module):
     """
@@ -30,8 +27,6 @@ class RNN(nn.Module):
         self.dim_z = dim_z
         self.dim_u = dim_u
         self.dim_N = dim_N
-
-        assert dim_z == RNN_DIM + TBRNN_DIM, f"Expected dim_z to be {RNN_DIM + TBRNN_DIM}, but got {dim_z}"
 
         self.params = params
         self.normal = torch.distributions.Normal(0, 1)
@@ -180,7 +175,7 @@ class RNN(nn.Module):
             self.get_initial_state = lambda u: self.initial_state.unsqueeze(
                 0
             ) + orth_proj(
-                torch.cat((self.transition.m_rnn,self.transition.l_tbrnn),dim=1),
+                self.transition.l_tbrnn,
                 torch.einsum("Nu,Bu->BN", self.transition.Wu, u),
             )
 
@@ -191,7 +186,7 @@ class RNN(nn.Module):
             self.get_initial_state = lambda u: self.initial_state.unsqueeze(
                 0
             ) + orth_proj(
-                torch.cat((self.transition.m_rnn,self.transition.l_tbrnn),dim=1),
+                self.transition.l_tbrnn,
                 torch.einsum("Nu,Bu->BN", self.transition.Wu, u),
             )
 
@@ -199,7 +194,7 @@ class RNN(nn.Module):
             self.get_initial_state = lambda u: -self.transition.h.unsqueeze(
                 0
             ) + orth_proj(
-                torch.cat((self.transition.m_rnn,self.transition.l_tbrnn),dim=1),
+                self.transition.l_tbrnn,
                 torch.einsum("Nu,Bu->BN", self.transition.Wu, u),
             )
 
@@ -532,8 +527,7 @@ class Transition_LowRank(nn.Module):
                 torch.zeros(hidden_dim), requires_grad=train_neuron_bias
             )
 
-        self.l_tbrnn, self.m_tbrnn, self.n_tbrnn = initialize_Ws_tbrnn(TBRNN_DIM, hidden_dim)
-        self.m_rnn, self.n_rnn = initialize_Ws_rnn(RNN_DIM, hidden_dim)
+        self.l_tbrnn, self.m_tbrnn, self.n_tbrnn = initialize_Ws_tbrnn(dz, hidden_dim)
 
         # Input weights
         if self.du > 0:
@@ -557,9 +551,8 @@ class Transition_LowRank(nn.Module):
             z (torch.tensor; n_trials x dim_z x time_steps x k): latent time series
         """
         R = self.get_rates(z, v=v)
-        z_rnn = torch.einsum("zN,BN...->Bz...", self.n_rnn, R)
         z_tbrnn = torch.einsum("zN,BN...->Bz...", self.n_tbrnn, R) * torch.einsum("zN,BN...->Bz...", self.m_tbrnn, R)
-        z = self.decay * z + torch.cat((z_rnn, z_tbrnn), dim=1)
+        z = self.decay * z + z_tbrnn
         return z
 
     def step_input(self, v, u):
@@ -594,7 +587,7 @@ class Transition_LowRank(nn.Module):
         Returns:
             X (torch.tensor; n_trials x dim_N x time_steps x k): neuron activity before nonlinearity
         """
-        X = torch.einsum("Nz,Bz...->BN...", torch.cat((self.m_rnn,self.l_tbrnn),dim=1), z) + torch.einsum(
+        X = torch.einsum("Nz,Bz...->BN...", self.l_tbrnn, z) + torch.einsum(
             "Nu,Bu...->BN...", self.Wu, v
         )
         return X

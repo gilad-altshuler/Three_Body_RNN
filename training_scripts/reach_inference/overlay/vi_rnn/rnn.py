@@ -1,9 +1,9 @@
 import os, importlib
 
-_impl = os.getenv("RNN_IMPL", "rnn")  # "hornn" or "rnn"
+_impl = os.getenv("RNN_IMPL", "rnn")  # "tbrnn" | "hornn" | "rnn"
 
 # Map to modules inside this overlay package
-target = ".hornn" if _impl == "hornn" else ".orig_rnn"
+target = ".orig_rnn" if _impl == "rnn" else f".{_impl}"
 _mod = importlib.import_module(target, __package__)
 
 # Re-export

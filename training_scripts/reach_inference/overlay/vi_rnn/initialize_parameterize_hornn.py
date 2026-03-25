@@ -82,44 +82,6 @@ def initialize_Ws_rnn(dz, N):
     return m, n
 
 
-# def initialize_Ws_uniform(dz, N, scale=1.0):
-#     """Initialize the weights of the network
-#     Args:
-#         dz (int): dimensionality of the latent space
-#         N (int): dimensionality of the data
-#         scale (float): scaling factor
-#     Returns:
-#         n (nn.Parameter): right singular vecs,  Uniform between -1/sqrt(N) and 1/sqrt(N)
-#         m (nn.Parameter): left singular vecs,  Uniform between -1/sqrt(dz) and 1/sqrt(dz)
-#     """
-#     print("using uniform init")
-#     n = uniform_init2d(dz, N) * np.sqrt(scale)
-#     m = uniform_init2d(N, dz) * np.sqrt(scale)
-#     return nn.Parameter(n, requires_grad=True), nn.Parameter(m, requires_grad=True)
-
-
-# def initialize_Ws_gauss(dz, N, scale=1.0):
-#     """Initialize the weights of the network with (correlated) Gaussians
-#     Args:
-#         dz (int): dimensionality of the latent space
-#         N (int): dimensionality of the data
-#         scale (float): scaling factor
-#     Returns:
-#         n (nn.Parameter): right singular vecs, with sd 1/(scaling*sqrt(3 N))
-#         m (nn.Parameter): left singular vecs, with sd 1/sqrt(3 dz)
-#     """
-#     print("using gauss init")
-#     cov = torch.eye(dz * 3)
-#     for i in range(dz):
-#         cov[i, dz + i] = 0.6
-#         cov[dz + i, i] = 0.6
-#     chol_cov = torch.linalg.cholesky(cov)
-#     loadings = chol_cov @ torch.randn(dz * 2, N)
-#     n = loadings[:dz, :] / (np.sqrt(scale * 3 * N))
-#     m = loadings[dz:, :] / np.sqrt(scale * 3 * dz)
-#     return nn.Parameter(n, requires_grad=True), nn.Parameter(m.T, requires_grad=True)
-
-
 def uniform_init2d(dim1, dim2):
     """Uniform init between -1/sqrt(dim2) and 1/sqrt(dim2)"""
     r = 1 / np.sqrt(dim2)

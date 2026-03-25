@@ -7,7 +7,7 @@ import pickle
 
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
-from methods.models import Low_Rank_RNN, Low_Rank_HORNN
+from methods.models import Low_Rank_RNN, Low_Rank_HORNN, Low_Rank_TBRNN
 from tasks.Mante_task import evaluate
 
 ROOT = Path(__file__).absolute().parent.parent.parent
@@ -26,8 +26,9 @@ modes = ["train", "valid", "test"]
 
 r2s = {
     m: {
-        "hornn": [None] * runs,
-        "rnn": [[None] * runs for _ in range(ranks)]
+        "hornn": [[None] * runs for _ in range(ranks)],
+        "rnn": [[None] * runs for _ in range(ranks)],
+        "tbrnn": [[None] * runs for _ in range(ranks)],
     }
     for m in modes
 }
@@ -45,22 +46,23 @@ for run in range(1,runs+1):
     w_out = torch.nn.Identity()
     output_nonlinearity = (lambda x: x)
 
-    student = Low_Rank_HORNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank_rnn=1,
-                             rank_tbrnn=1, task="Mante_task", mode='cont', form='rate',
-                             output_nonlinearity=output_nonlinearity, noise_std=0.0, tau=0.2,
-                             Win_bias=False, Wout_bias=False, w_out=w_out).to(DEVICE)
-    
-    if not os.path.exists(path := RUN_DIR / f"{run:03}" / "r_1_r_1_hornn_student.pth"):
-        print(f"❌ Missing: {path}")
-        exit(1)
-    student.load_state_dict(torch.load(path, map_location=DEVICE, weights_only=True))
-
-    for m in modes:
-        r2s[m]['hornn'][i] = evaluate(student, locals()[f"{m}_set"], r2_mode='per_batch')
-
     for rank in range(1, ranks+1):
-        # define teachers
-        student = Low_Rank_RNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank=rank,
+
+        hornn_student = Low_Rank_HORNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank_rnn=rank,
+                                rank_tbrnn=1, task="Mante_task", mode='cont', form='rate',
+                                output_nonlinearity=output_nonlinearity, noise_std=0.0, tau=0.2,
+                                Win_bias=False, Wout_bias=False, w_out=w_out).to(DEVICE)
+        
+        if not os.path.exists(path := RUN_DIR / f"{run:03}" / f"r_{rank}_r_1_hornn_student.pth"):
+            print(f"❌ Missing: {path}")
+            exit(1)
+        hornn_student.load_state_dict(torch.load(path, map_location=DEVICE, weights_only=True))
+
+        for m in modes:
+            r2s[m]['hornn'][rank-1][i] = evaluate(hornn_student, locals()[f"{m}_set"], r2_mode='per_batch')
+
+
+        rnn_student = Low_Rank_RNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank=rank,
                                task="Mante_task", mode='cont', form='rate',output_nonlinearity=output_nonlinearity,
                                noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False, w_out=w_out).to(DEVICE)
         
@@ -68,13 +70,27 @@ for run in range(1,runs+1):
         if not os.path.exists(path := RUN_DIR / f"{run:03}" / f"r_{rank}_rnn_student.pth"):
             print(f"❌ Missing: {path}")
             exit(1)
-        student.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
+        rnn_student.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
 
         # evaluate rnns
         for m in modes:
-            r2s[m]['rnn'][rank-1][i] = evaluate(student, locals()[f"{m}_set"], r2_mode='per_batch')
+            r2s[m]['rnn'][rank-1][i] = evaluate(rnn_student, locals()[f"{m}_set"], r2_mode='per_batch')
 
-models = ['rnn','hornn']
+        tbrnn_student = Low_Rank_TBRNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank=rank,
+                               task="Mante_task", mode='cont', form='rate',output_nonlinearity=output_nonlinearity,
+                               noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False, w_out=w_out).to(DEVICE)
+        
+        # load student models
+        if not os.path.exists(path := RUN_DIR / f"{run:03}" / f"r_{rank}_tbrnn_student.pth"):
+            print(f"❌ Missing: {path}")
+            exit(1)
+        tbrnn_student.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
+
+        # evaluate tbrnns
+        for m in modes:
+            r2s[m]['tbrnn'][rank-1][i] = evaluate(tbrnn_student, locals()[f"{m}_set"], r2_mode='per_batch')
+
+models = ['rnn', 'hornn', 'tbrnn']
 for model in models:
     for m in modes:
         r2s[m][model] = np.array(r2s[m][model])

@@ -15,8 +15,21 @@ DATA_ROOT = Path(__file__).absolute().parent.parent.parent / "data" / "mante_inf
 
 def train_mante_inference(run_name, ranks, epochs, batch_size, lr):
 
-    # load mante data
-    train_dataset, valid_dataset, test_dataset = generate_data(DATA_ROOT, DEVICE=DEVICE)
+    run_dir = RUN_ROOT / run_name
+    if not os.path.isdir(run_dir):
+        run_dir.mkdir(parents=True)
+
+    if (run_dir / "train_set.pth").exists() and (run_dir / "valid_set.pth").exists() and (run_dir / "test_set.pth").exists():
+        train_dataset = torch.load(run_dir / "train_set.pth")
+        valid_dataset = torch.load(run_dir / "valid_set.pth")
+        test_dataset = torch.load(run_dir / "test_set.pth")
+    else:
+        # load mante data
+        train_dataset, valid_dataset, test_dataset = generate_data(DATA_ROOT, DEVICE=DEVICE)
+        torch.save(train_dataset, run_dir / "train_set.pth")
+        torch.save(valid_dataset, run_dir / "valid_set.pth")
+        torch.save(test_dataset, run_dir / "test_set.pth")
+        
     input,target,hidden,_ = train_dataset.dataset.tensors
 
     criterion = torch.nn.MSELoss()
@@ -27,27 +40,32 @@ def train_mante_inference(run_name, ranks, epochs, batch_size, lr):
     print("Training student models...")
     # training student models
 
-    run_dir = RUN_ROOT / run_name
-    if not os.path.isdir(run_dir):
-        run_dir.mkdir(parents=True)
-
-    print(f"Training low rank hornn student...")
-
-    student = Low_Rank_HORNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank_rnn=1,
-                             rank_tbrnn=1, task="Mante_task", mode='cont', form='rate',
-                             output_nonlinearity=output_nonlinearity, noise_std=0.0, tau=0.2,
-                             Win_bias=False, Wout_bias=False, w_out=w_out).to(DEVICE)
-
-    optimizer = torch.optim.Adam(student.parameters(), lr=lr[0])
-    scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=lr[1]/lr[0],total_iters=epochs)
-
-    _ = train(student, train_dataset, epochs, optimizer, criterion,
-                valid_set=valid_dataset, scheduler=scheduler, batch_size=batch_size,
-                clip_gradient=1, keep_best=True, plot=False)
-
-    torch.save(student.state_dict(), run_dir / f"r_1_r_1_hornn_student.pth")
-
+    print(f"Training low rank hornn students...")
     for rank in range(1, ranks+1):
+        if (run_dir / f"r_{rank}_r_1_hornn_student.pth").exists():
+            print(f"r-{rank}r-1 HORNN student already exists, skipping...")
+            continue
+
+        student = Low_Rank_HORNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank_rnn=rank,
+                                rank_tbrnn=1, task="Mante_task", mode='cont', form='rate',
+                                output_nonlinearity=output_nonlinearity, noise_std=0.0, tau=0.2,
+                                Win_bias=False, Wout_bias=False, w_out=w_out).to(DEVICE)
+
+        optimizer = torch.optim.Adam(student.parameters(), lr=lr[0])
+        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=lr[1]/lr[0],total_iters=epochs)
+
+        _ = train(student, train_dataset, epochs, optimizer, criterion,
+                    valid_set=valid_dataset, scheduler=scheduler, batch_size=batch_size,
+                    clip_gradient=1, keep_best=True, plot=False)
+
+        torch.save(student.state_dict(), run_dir / f"r_{rank}_r_1_hornn_student.pth")
+
+    print(f"Training low rank rnn students...")
+    for rank in range(1, ranks+1):
+        if (run_dir / f"r_{rank}_rnn_student.pth").exists():
+            print(f"r-{rank} RNN student already exists, skipping...")
+            continue
+
         print(f"Training rank-{rank} rnn student...")
 
         student = Low_Rank_RNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank=rank,
@@ -63,9 +81,27 @@ def train_mante_inference(run_name, ranks, epochs, batch_size, lr):
 
         torch.save(student.state_dict(), run_dir / f"r_{rank}_rnn_student.pth")
 
-    torch.save(train_dataset, run_dir / "train_set.pth")
-    torch.save(valid_dataset, run_dir / "valid_set.pth")
-    torch.save(test_dataset, run_dir / "test_set.pth")
+    print(f"Training low rank tbrnn students...")
+    for rank in range(1, ranks+1):
+        if (run_dir / f"r_{rank}_tbrnn_student.pth").exists():
+            print(f"r-{rank} TBRNN student already exists, skipping...")
+            continue
+
+        print(f"Training rank-{rank} tbrnn student...")
+
+        student = Low_Rank_TBRNN(input.shape[-1], target.shape[-1],hidden.shape[-1], rank=rank,
+                               task="Mante_task", mode='cont', form='rate',output_nonlinearity=output_nonlinearity,
+                               noise_std=0.0, tau=0.2, Win_bias=False, Wout_bias=False, w_out=w_out).to(DEVICE)
+
+        optimizer = torch.optim.Adam(student.parameters(), lr=lr[0])
+        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0,end_factor=lr[1]/lr[0],total_iters=epochs)
+
+        _ = train(student, train_dataset, epochs, optimizer, criterion,
+                  valid_set=valid_dataset, scheduler=scheduler, batch_size=batch_size,
+                  clip_gradient=1, keep_best=True, plot=False)
+
+        torch.save(student.state_dict(), run_dir / f"r_{rank}_tbrnn_student.pth")
+
 
 if __name__ == "__main__":
     import argparse

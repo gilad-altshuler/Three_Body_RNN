@@ -13,10 +13,23 @@ MAX_JOBS_PER_GPU=3
 GPUS=(0 1 2 3)
 
 # ---------- configs ----------
-# "DIM_Z,rnn"  OR  "RNN_DIM,TBRNN_DIM,hornn"
+# "DIM_Z,rnn"  | "DIM_Z,tbrnn" | "RNN_DIM,TBRNN_DIM,hornn"
 CONFIGS=(
+  "1,rnn"
+  "2,rnn"
+  "3,rnn"
+  "4,rnn"
   "5,rnn"
   "6,rnn"
+  "1,tbrnn"
+  "2,tbrnn"
+  "3,tbrnn"
+  "4,tbrnn"
+  "5,tbrnn"
+  "6,tbrnn"
+  "1,1,hornn"
+  "2,1,hornn"
+  "3,1,hornn"
   "4,1,hornn"
   "5,1,hornn"
   "6,1,hornn"
@@ -77,8 +90,16 @@ PIDFILE="$ROOT/outputs/reach_inference/reach_condition/pids.txt"
         *)  echo "Bad CONFIG: $cfg" >&2; exit 1 ;;
       esac
 
-      GPU_ID=$(pick_gpu)
       RUN=$(printf "%03d" "$i")
+
+      RUN_DIR="$(dirname "$REPO")/runs/reach_conditioning/${TAG}_${MODEL}/${RUN}"
+      if [[ -d "$RUN_DIR" ]]; then
+        echo "[SKIP] exists: $RUN_DIR (i=$i cfg='$cfg')" >&2
+        continue
+      fi
+
+      GPU_ID=$(pick_gpu)
+
       LOG_DIR="$ROOT/outputs/reach_inference/reach_condition/$MODEL/$TAG"
       mkdir -p "$LOG_DIR"
 

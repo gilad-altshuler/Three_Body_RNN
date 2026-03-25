@@ -7,7 +7,7 @@ import pickle
 
 sys.path.insert(1, str(Path(__file__).absolute().parent.parent.parent))
 
-from methods.models import RNN, TBRNN, HORNN, get_model_str
+from methods.models import RNN, TBRNN, HORNN, Low_Rank_RNN, Low_Rank_TBRNN, Low_Rank_HORNN, get_model_str
 from tasks.MultiFate_task import evaluate
 
 ROOT = Path(__file__).absolute().parent.parent.parent
@@ -24,9 +24,10 @@ T = 100
 input_size = output_size = hidden_dim = N = 30
 
 runs = 30
+ranks = 10
 
 models = [RNN, TBRNN, HORNN]
-
+low_rank_models = [Low_Rank_RNN, Low_Rank_TBRNN, Low_Rank_HORNN]
 stats = {
     "cka": {
     "rnn": [None for _ in range(runs)],
@@ -39,6 +40,21 @@ stats = {
     "hornn": [None for _ in range(runs)],
     },
 }
+
+
+lr_stats = {
+    "cka": {
+    "rnn": [[None for _ in range(runs)] for _ in range(ranks)],
+    "tbrnn": [[None for _ in range(runs)] for _ in range(ranks)],
+    "hornn": [[None for _ in range(runs)] for _ in range(ranks)],
+    },
+    "r2": {
+    "rnn": [[None for _ in range(runs)] for _ in range(ranks)],
+    "tbrnn": [[None for _ in range(runs)] for _ in range(ranks)],
+    "hornn": [[None for _ in range(runs)] for _ in range(ranks)],
+    },
+}
+
 for run in range(1,runs+1):
     i = run-1
     print(f"Reading stats of run: {run:03}")
@@ -62,6 +78,30 @@ for run in range(1,runs+1):
         r2, cka = evaluate(student, input[:,1:,:], x_half[:,1:], hidden=x_half[:,0,:], r2_mode='per_neuron', r2_all=False)
         stats['r2'][model_name][i] = r2
         stats['cka'][model_name][i] = cka
+    
+    for model in low_rank_models:
+        model_name = get_model_str(model)
+        for rank in range(1, ranks+1):
+            r_i = rank-1
+            if model == Low_Rank_HORNN:
+                student = model(input_size, output_size, hidden_dim, rank_rnn=1, rank_tbrnn=rank,
+                                mode='cont', form='rate', nonlinearity=torch.tanh, output_nonlinearity=torch.sigmoid,
+                                task="MultiFate_task", noise_std=0.0, tau=0.2, Win_bias=True, Wout_bias=True,
+                                w_out=torch.nn.Identity()).to(DEVICE)
+            else:
+                student = model(input_size, output_size, hidden_dim, rank=rank,
+                                mode='cont', form='rate', nonlinearity=torch.tanh, output_nonlinearity=torch.sigmoid,
+                                task="MultiFate_task", noise_std=0.0, tau=0.2, Win_bias=True, Wout_bias=True,
+                                w_out=torch.nn.Identity()).to(DEVICE)
+
+            if not os.path.exists(path := RUN_DIR / f"{run:03}" / f"r_{rank}_{model_name}_student.pth"):
+                print(f"❌ Missing: {path}")
+                exit(1)
+            student.load_state_dict(torch.load(path,map_location=DEVICE,weights_only=True))
+
+            r2, cka = evaluate(student, input[:,1:,:], x_half[:,1:], hidden=x_half[:,0,:], r2_mode='per_neuron', r2_all=False)
+            lr_stats['r2'][model_name][r_i][i] = r2
+            lr_stats['cka'][model_name][r_i][i] = cka
 
 
 for model in models:
@@ -69,9 +109,16 @@ for model in models:
     stats['r2'][model_name] = np.array(stats['r2'][model_name])
     stats['cka'][model_name] = np.array(stats['cka'][model_name])
 
+for model in low_rank_models:
+    model_name = get_model_str(model)
+    lr_stats['r2'][model_name] = np.array(lr_stats['r2'][model_name])
+    lr_stats['cka'][model_name] = np.array(lr_stats['cka'][model_name])
+
 if not os.path.isdir(DATA_DIR):
     DATA_DIR.mkdir(parents=True)
 
 with open(DATA_DIR / "stats.pkl", "wb") as f:
     pickle.dump(stats, f)
+with open(DATA_DIR / "lr_stats.pkl", "wb") as f:
+    pickle.dump(lr_stats, f)
 print("Done. All data saved to:", DATA_DIR)

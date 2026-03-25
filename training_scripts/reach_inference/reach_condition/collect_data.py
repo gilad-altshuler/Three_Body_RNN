@@ -9,11 +9,24 @@ ROOT = Path(__file__).absolute().parent.parent.parent.parent
 RUN_DIR = ROOT.parent / "ext" / "runs" / "reach_conditioning"
 DATA_DIR = ROOT / "data" / "reach_inference" / "reach_condition"
 CONFIGS=(
-  "r_5_rnn",
-  "r_6_rnn",
-  "r_4_r_1_hornn",
-  "r_5_r_1_hornn",
-  "r_6_r_1_hornn",
+  "r_1_rnn",
+    "r_2_rnn",
+    "r_3_rnn",
+    "r_4_rnn",
+    "r_5_rnn",
+    "r_6_rnn",
+    "r_1_tbrnn",
+    "r_2_tbrnn",
+    "r_3_tbrnn",
+    "r_4_tbrnn",
+    "r_5_tbrnn",
+    "r_6_tbrnn",
+    "r_1_r_1_hornn",
+    "r_2_r_1_hornn",
+    "r_3_r_1_hornn",
+    "r_4_r_1_hornn",
+    "r_5_r_1_hornn",
+    "r_6_r_1_hornn",
 )
 RUNS = 30
 
