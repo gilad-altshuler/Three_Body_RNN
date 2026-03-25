@@ -3,33 +3,32 @@
 ## About
 Code repository accompaning the paper "Beyond linear summation: Three-Body RNNs for modeling complex neural and biological systems"
 
-<img width="2250" height="1500" alt="Three Body interactions (1)" src="https://github.com/user-attachments/assets/b0e5a8a6-b94e-472a-a844-5cbac45a82ea" />
+<img width="2250" height="1500" alt="three_body_interactions" src="https://github.com/user-attachments/assets/3fe1f2a9-06ed-4d45-8a2f-c0b552270112" />
 
 Fig 1. Motivation: Three-body interactions. 
-(a) Neuromodulatory axon operates as a third body in the synapse. 
-(b) Incorporating glial cells into the network induces nonlinear summation. 
-(c) Dendritic nonlinearities, where inputs on the same branch gate each other. 
+(a) Dendritic nonlinearities, where inputs on the same branch gate each other. 
+(b) Neuromodulatory axon operates as a third body in the synapse. 
+(c) Incorporating glial cells into the network induces nonlinear summation. 
 (d) Gene expression dimerization networks. Monomers form homo- or hetero-dimers that act as transcription factors (TFs). In the competitive setup shown, homo-dimers ($ii,jj,kk,\dots$) upregulate production of their own monomer. Hetero-dimers exert no direct regulation but lower the pool of free monomers, thereby indirectly downregulating expression.
 (e) Traditional neural network with linear pre-synaptic summation (left) while biophysics is more complex and input couplings present (right).
-    Figure created with BioRender.com. Panel (d) schematic inspired by Klumpe et al. (2023). 
-
+    Figure created with BioRender.com. Panel (d) schematic inspired by Zhu et al., 2022.
 
 ## Reproduce paper figures 
 
 **You may open the notebooks in google colab and simply click "Run all".**
 
-|Figure / Table         | Reproduce + Link to instructions |
+|Figure        | Reproduce + Link to instructions |
 |----------------------|------|
 |Fig 1. Motivation: Three-body interactions|Created manually in Biorender.com|
 |Fig 2. Neuroscience tasks and their biological gene expression counterparts|Created manually in Biorender.com|
-|Fig 3. Theory validation on K-Bit Flipflop task|[`1_Low_rank_TBRNN_validation.ipynb`](#Low-rank-TBRNN-validation)|
+|Fig 3. Low rank inference for TBRNNs|[`1_Low_rank_TBRNN_validation.ipynb`](#Low-rank-TBRNN-validation)|
 |Fig 4. Expanding solution space|[`2_Solution_space.ipynb`](#Expanding-solution-space)|
-|Fig 5. TBRNNs better recapitulate MultiFate protein dynamics than RNNs.|[`4_MultiFate inference.ipynb`](#Multi-Fate-inference-task)|
-|Fig 6. Evaluation on neural recording tasks.|[`5_Neural_recordings_inference.ipynb`](#Monkey-neural-trajectory-inference-tasks)|
-|Fig 7. Mapping tasks space|Created manually|
+|Fig 5. Synthetic validation of interaction-order detection|[`3_Teacher_Student.ipynb`](#Teacher-student-setup-on-synthetic-neuroscience-data)|
+|Fig 6. Detection of higher-order interactions in the MultiFate dynamical system|[`4_MultiFate inference.ipynb`](#Multi-Fate-inference-task)|
+|Fig 7. Interaction-order detection on neural population datasets|[`5_Neural_recordings_inference.ipynb`](#Monkey-neural-trajectory-inference-tasks)|
+|Fig 8. Task-space mapping based on latent rank and interaction order|Created manually|
 |Fig SI.1. Comparison of LrTBRNN with truncated $\Delta\mathcal{W}$|[`1_Low_rank_TBRNN_validation.ipynb`](#Low-rank-TBRNN-validation)|
-|Table 1. Teacher-student inference results on K-bit Flip-Flop and sine wave synthetic tasks|[`3_Teacher_Student.ipynb`](#Teacher-student-setup-on-synthetic-neuroscience-data)|
-|Table 2. Model CKA scores performance on 30-MultiFate inference task|[`4_MultiFate inference.ipynb`](#Multi-Fate-inference-task)|
+|Fig SI.2. Distribution of pairwise CKA values between model classes|[`2_Solution_space.ipynb`](#Expanding-solution-space)|
 
 ## Results - how to run
 ### Start
